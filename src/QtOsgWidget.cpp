@@ -175,8 +175,8 @@ namespace QtOsgBridge
 
     event->accept();
 
-    const auto delta  = event->delta();
-    const auto motion = (delta > 0) ? osgGA::GUIEventAdapter::SCROLL_UP : osgGA::GUIEventAdapter::SCROLL_DOWN;
+    const auto delta  = event->angleDelta();
+    const auto motion = (delta.y() > 0) ? osgGA::GUIEventAdapter::SCROLL_UP : osgGA::GUIEventAdapter::SCROLL_DOWN;
 
     m_graphicsWindow->getEventQueue()->mouseScroll(motion);
   }
