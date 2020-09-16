@@ -63,10 +63,17 @@ namespace QtOsgBridge
       m_renderLayers[i] = layer;
     }
 
-    auto screenCamera = m_renderLayers[static_cast<int>(ViewType::Screen)].camera;
+    auto screenStage = m_renderLayers[static_cast<int>(ViewType::Screen)];
 
-    screenCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
-    screenCamera->setProjectionMode(osgHelper::Camera::ProjectionMode::Ortho2D);
+    screenStage.camera->setClearMask(GL_DEPTH_BUFFER_BIT);
+    screenStage.camera->setProjectionMode(osgHelper::Camera::ProjectionMode::Ortho2D);
+
+    auto stateSet = screenStage.view->getRootGroup()->getOrCreateStateSet();
+    stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+    stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    stateSet->setRenderBinDetails(10, "RenderBin");
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
