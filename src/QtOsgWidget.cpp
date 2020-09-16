@@ -1,5 +1,7 @@
 #include <QtOsgBridge/QtOsgWidget.h>
 
+#include <osgHelper/Macros.h>
+
 #include <QKeyEvent>
 
 namespace QtOsgBridge
@@ -30,28 +32,41 @@ namespace QtOsgBridge
   }
 
   QtOsgWidget::QtOsgWidget(QWidget* parent)
-    : QOpenGLWidget(parent)
-    , m_viewer(new Viewer())
-    , m_view(new osgViewer::View())
-    , m_camera(new osg::Camera())
+    : GLWidgetBase(parent)
     , m_graphicsWindow(new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height()))
     , m_updateMode(UpdateMode::OnInputEvent)
   {
-    const auto w = width();
-    const auto h = height();
-    
-    const auto aspectRatio = static_cast<float>(w) / h;
+    const auto w          = width();
+    const auto h          = height();
+    const auto pixelRatio = devicePixelRatio();
 
-    m_camera->setProjectionMatrixAsPerspective(30.0f, aspectRatio, 1.0f, 1000.0f);
-    m_camera->setGraphicsContext(m_graphicsWindow);
+    // const auto aspectRatio = static_cast<float>(w) / h;
 
-    onResize(w, h);
+    const auto numLayers = static_cast<int>(ViewType::_Count);
+    m_renderLayers.resize(numLayers);
+    for (auto i=0; i<numLayers; i++)
+    {
+      RenderLayer layer;
 
-    m_view->setCamera(m_camera);
+      layer.view   = new osgHelper::View();
+      layer.camera = new osgHelper::Camera(*layer.view->getCamera());
 
-    m_viewer->addView(m_view);
-    m_viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
-    m_viewer->realize();
+      layer.camera->setGraphicsContext(m_graphicsWindow);
+      layer.view->setCamera(layer.camera);
+      layer.view->updateViewport(0, 0, w, h, pixelRatio);
+
+      layer.viewer = new osgViewer::CompositeViewer();
+      layer.viewer->addView(layer.view);
+      layer.viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+      layer.viewer->realize();
+
+      m_renderLayers[i] = layer;
+    }
+
+    auto screenCamera = m_renderLayers[static_cast<int>(ViewType::Screen)].camera;
+
+    screenCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
+    screenCamera->setProjectionMode(osgHelper::Camera::ProjectionMode::Ortho2D);
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -89,27 +104,42 @@ namespace QtOsgBridge
     m_updateTimer.setInterval(1000 / fps);
   }
 
-  osg::ref_ptr<Viewer>& QtOsgWidget::getViewer()
+  osg::ref_ptr<osgHelper::View> QtOsgWidget::getView(ViewType type) const
   {
-    return m_viewer;
+    const auto index = static_cast<int>(type);
+    assert_return(index < static_cast<int>(ViewType::_Count), osgHelper::View::Ptr());
+
+    return m_renderLayers[index].view;
   }
 
-  osg::ref_ptr<osgViewer::View>& QtOsgWidget::getView()
+  osg::ref_ptr<osgHelper::Camera> QtOsgWidget::getCamera(ViewType type) const
   {
-    return m_view;
+    const auto index = static_cast<int>(type);
+    assert_return(index < static_cast<int>(ViewType::_Count), osgHelper::Camera::Ptr());
+
+    return m_renderLayers[index].camera;
   }
 
   void QtOsgWidget::paintGL()
   {
-    m_viewer->frame();
+    const auto numViewers = static_cast<int>(ViewType::_Count);
+    for (auto i = 0; i < numViewers; i++)
+    {
+        m_renderLayers[i].viewer->frame();
+    }
   }
 
   void QtOsgWidget::resizeGL(int width, int height)
   {
+    const auto numViewers = static_cast<int>(ViewType::_Count);
+    for (auto i=0; i<numViewers; i++)
+    {
+      m_renderLayers[i].view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
+      m_renderLayers[i].camera->updateResolution(osg::Vec2i(width, height));
+    }
+
     m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
     m_graphicsWindow->resized(x(), y(), width, height);
-
-    onResize(width, height);
   }
 
   void QtOsgWidget::paintEvent(QPaintEvent* paintEvent)
@@ -121,7 +151,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::keyPressEvent(QKeyEvent* event)
   {
-    QOpenGLWidget::keyPressEvent(event);
+      GLWidgetBase::keyPressEvent(event);
 
     const auto keyString = event->text();
     const auto keyData   = keyString.toLocal8Bit().data();
@@ -131,7 +161,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::keyReleaseEvent(QKeyEvent* event)
   {
-    QOpenGLWidget::keyReleaseEvent(event);
+      GLWidgetBase::keyReleaseEvent(event);
 
     const auto keyString = event->text();
     const auto keyData   = keyString.toLocal8Bit().data();
@@ -141,7 +171,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::mouseMoveEvent(QMouseEvent* event)
   {
-    QOpenGLWidget::mouseMoveEvent(event);
+      GLWidgetBase::mouseMoveEvent(event);
 
     const auto pixelRatio = devicePixelRatio();
 
@@ -151,7 +181,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::mousePressEvent(QMouseEvent* event)
   {
-    QOpenGLWidget::mousePressEvent(event);
+      GLWidgetBase::mousePressEvent(event);
 
     const auto pixelRatio = devicePixelRatio();
 
@@ -161,7 +191,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::mouseReleaseEvent(QMouseEvent* event)
   {
-    QOpenGLWidget::mouseReleaseEvent(event);
+      GLWidgetBase::mouseReleaseEvent(event);
 
     const auto pixelRatio = devicePixelRatio();
 
@@ -171,7 +201,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::wheelEvent(QWheelEvent* event)
   {
-    QOpenGLWidget::wheelEvent(event);
+      GLWidgetBase::wheelEvent(event);
 
     event->accept();
 
@@ -183,7 +213,7 @@ namespace QtOsgBridge
 
   bool QtOsgWidget::event(QEvent* event)
   {
-    const auto handled = QOpenGLWidget::event(event);
+    const auto handled = GLWidgetBase::event(event);
 
     if (m_updateMode != UpdateMode::OnInputEvent)
     {
@@ -207,12 +237,5 @@ namespace QtOsgBridge
     }
 
     return handled;
-  }
-
-  void QtOsgWidget::onResize(int width, int height) const
-  {
-    const auto pixelRatio = this->devicePixelRatio();
-
-    m_camera->setViewport(0, 0, width * pixelRatio, height * pixelRatio);
   }
 }

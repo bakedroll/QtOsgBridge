@@ -1,13 +1,19 @@
 #pragma once
 
-#include "QtOsgBridge/Viewer.h"
+#include <osgHelper/View.h>
+#include <osgHelper/Camera.h>
+
+#include <osgViewer/CompositeViewer>
+#include <osgViewer/View>
 
 #include <QOpenGLWidget>
 #include <QTimer>
 
 namespace QtOsgBridge
 {
-  class QtOsgWidget : public QOpenGLWidget
+  using GLWidgetBase = QOpenGLWidget;
+
+  class QtOsgWidget : public GLWidgetBase
   {
     Q_OBJECT
 
@@ -18,13 +24,20 @@ namespace QtOsgBridge
       OnTimerEvent
     };
 
+    enum class ViewType
+    {
+      Scene,
+      Screen,
+      _Count
+    };
+
     QtOsgWidget(QWidget* parent = nullptr);
 
     void setUpdateMode(UpdateMode mode);
     void setTargetFps(int fps);
 
-    osg::ref_ptr<Viewer>& getViewer();
-    osg::ref_ptr<osgViewer::View>& getView();
+    osg::ref_ptr<osgHelper::View>   getView(ViewType type = ViewType::Scene) const;
+    osg::ref_ptr<osgHelper::Camera> getCamera(ViewType type = ViewType::Scene) const;
 
   protected:
     void paintGL() override;
@@ -42,11 +55,17 @@ namespace QtOsgBridge
     bool event(QEvent* event) override;
 
   private:
-    void onResize(int width, int height) const;
+    struct RenderLayer
+    {
+      osg::ref_ptr<osgViewer::CompositeViewer> viewer;
+      osg::ref_ptr<osgHelper::View>            view;
+      osg::ref_ptr<osgHelper::Camera>          camera;
+    };
 
-    osg::ref_ptr<Viewer>                            m_viewer;
-    osg::ref_ptr<osgViewer::View>                   m_view;
-    osg::ref_ptr<osg::Camera>                       m_camera;
+    using RenderLayerList = std::vector<RenderLayer>;
+
+    RenderLayerList m_renderLayers;
+
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_graphicsWindow;
 
     QTimer     m_updateTimer;

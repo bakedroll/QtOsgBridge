@@ -4,7 +4,7 @@ set(CMAKE_AUTOMOC ON)
 set(PROJECT_NAME QtOsgBridge)
 
 add_source_directory(QTOSGBRIDGE_SOURCE src)
-add_source_directory(QTOSGBRIDGE_SOURCE include)
+add_source_directory(QTOSGBRIDGE_SOURCE include/QtOsgBridge)
 
 set(QTOSGBRIDGE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -24,7 +24,10 @@ endforeach()
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${QTOSGBRIDGE_INCLUDE_DIR}
   ${OSG_INCLUDE_DIR}
-  ${OSGPPU_INCLUDE_DIR})
+  ${OSGPPU_INCLUDE_DIR}
+  ${OSGHELPER_INCLUDE_DIR})
+
+target_link_libraries(${PROJECT_NAME} osgHelper)
   
 # make variable globally accessable
 set(QTOSGBRIDGE_INCLUDE_DIR ${QTOSGBRIDGE_INCLUDE_DIR} PARENT_SCOPE)
