@@ -138,15 +138,15 @@ namespace QtOsgBridge
 
   void QtOsgWidget::resizeGL(int width, int height)
   {
+    m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
+    m_graphicsWindow->resized(x(), y(), width, height);
+
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i=0; i<numViewers; i++)
     {
       m_renderLayers[i].view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
       m_renderLayers[i].camera->updateResolution(osg::Vec2i(width, height));
     }
-
-    m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
-    m_graphicsWindow->resized(x(), y(), width, height);
   }
 
   void QtOsgWidget::paintEvent(QPaintEvent* paintEvent)
