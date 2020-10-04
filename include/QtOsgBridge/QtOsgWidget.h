@@ -59,7 +59,6 @@ namespace QtOsgBridge
     {
       osg::ref_ptr<osgViewer::CompositeViewer> viewer;
       osg::ref_ptr<osgHelper::View>            view;
-      osg::ref_ptr<osgHelper::Camera>          camera;
     };
 
     using RenderLayerList = std::vector<RenderLayer>;

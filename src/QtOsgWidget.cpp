@@ -3,6 +3,8 @@
 #include <osgHelper/Macros.h>
 
 #include <QKeyEvent>
+#include <QOpenGLContext>
+#include <QPainter>
 
 namespace QtOsgBridge
 {
@@ -36,11 +38,29 @@ namespace QtOsgBridge
     , m_graphicsWindow(new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height()))
     , m_updateMode(UpdateMode::OnInputEvent)
   {
+    setTextureFormat(GL_RGBA16F_ARB);
+    //setTextureFormat(GL_RGB16F);
+
+    //auto surfaceFormat = format();
+    //auto a = surfaceFormat.redBufferSize();
+
+    //auto profile = surfaceFormat.profile();
+    //auto type = surfaceFormat.renderableType();
+    //auto swap = surfaceFormat.swapBehavior();
+
+    /*surfaceFormat.setAlphaBufferSize(0);
+    surfaceFormat.setRedBufferSize(16);
+    surfaceFormat.setGreenBufferSize(16);
+    surfaceFormat.setBlueBufferSize(16);
+
+    setFormat(surfaceFormat);*/
+
+    //auto c = context();
+    //auto fbo = c->defaultFramebufferObject();
+
     const auto w          = width();
     const auto h          = height();
     const auto pixelRatio = devicePixelRatio();
-
-    // const auto aspectRatio = static_cast<float>(w) / h;
 
     const auto numLayers = static_cast<int>(ViewType::_Count);
     m_renderLayers.resize(numLayers);
@@ -49,10 +69,11 @@ namespace QtOsgBridge
       RenderLayer layer;
 
       layer.view   = new osgHelper::View();
-      layer.camera = new osgHelper::Camera(*layer.view->getCamera());
 
-      layer.camera->setGraphicsContext(m_graphicsWindow);
-      layer.view->setCamera(layer.camera);
+      layer.view->setOpenGLContextControlFunctions(std::bind(&QtOsgWidget::makeCurrent, this),
+                                                   std::bind(&QtOsgWidget::doneCurrent, this));
+
+      layer.view->getCamera()->setGraphicsContext(m_graphicsWindow);
       layer.view->updateViewport(0, 0, w, h, pixelRatio);
 
       layer.viewer = new osgViewer::CompositeViewer();
@@ -63,10 +84,11 @@ namespace QtOsgBridge
       m_renderLayers[i] = layer;
     }
 
-    auto screenStage = m_renderLayers[static_cast<int>(ViewType::Screen)];
+    const auto screenStage   = m_renderLayers[static_cast<int>(ViewType::Screen)];
+    auto       sceneStageCam = screenStage.view->getSceneCamera();
 
-    screenStage.camera->setClearMask(GL_DEPTH_BUFFER_BIT);
-    screenStage.camera->setProjectionMode(osgHelper::Camera::ProjectionMode::Ortho2D);
+    sceneStageCam->setClearMask(GL_DEPTH_BUFFER_BIT);
+    sceneStageCam->setProjectionMode(osgHelper::Camera::ProjectionMode::Ortho2D);
 
     auto stateSet = screenStage.view->getRootGroup()->getOrCreateStateSet();
     stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
@@ -124,16 +146,21 @@ namespace QtOsgBridge
     const auto index = static_cast<int>(type);
     assert_return(index < static_cast<int>(ViewType::_Count), osgHelper::Camera::Ptr());
 
-    return m_renderLayers[index].camera;
+    return m_renderLayers[index].view->getSceneCamera();
   }
 
   void QtOsgWidget::paintGL()
   {
+    //QPainter painter(this);
+    //painter.beginNativePainting();
+
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i = 0; i < numViewers; i++)
     {
         m_renderLayers[i].viewer->frame();
     }
+
+    //painter.endNativePainting();
   }
 
   void QtOsgWidget::resizeGL(int width, int height)
@@ -144,8 +171,9 @@ namespace QtOsgBridge
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i=0; i<numViewers; i++)
     {
-      m_renderLayers[i].view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
-      m_renderLayers[i].camera->updateResolution(osg::Vec2i(width, height));
+      auto view = m_renderLayers[i].view;
+      view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
+      view->getSceneCamera()->updateResolution(osg::Vec2i(width, height));
     }
   }
 
