@@ -57,17 +57,21 @@ namespace QtOsgBridge
   private:
     struct RenderLayer
     {
-      osg::ref_ptr<osgViewer::CompositeViewer> viewer;
-      osg::ref_ptr<osgHelper::View>            view;
+      osg::ref_ptr<osgViewer::CompositeViewer>        viewer;
+      osg::ref_ptr<osgHelper::View>                   view;
+      osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> graphics;
+      //osg::ref_ptr<osg::GraphicsContext>              context;
     };
 
-    using RenderLayerList = std::vector<RenderLayer>;
+    using RenderLayerList  = std::vector<RenderLayer>;
+    using EventHandlerFunc = std::function<osgGA::GUIEventAdapter*(osgGA::EventQueue*)>;
 
     RenderLayerList m_renderLayers;
 
-    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_graphicsWindow;
-
     QTimer     m_updateTimer;
     UpdateMode m_updateMode;
+
+    void handleEvent(const EventHandlerFunc& handlerFunc) const;
+
   };
 }

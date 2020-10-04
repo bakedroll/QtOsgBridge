@@ -35,10 +35,10 @@ namespace QtOsgBridge
 
   QtOsgWidget::QtOsgWidget(QWidget* parent)
     : GLWidgetBase(parent)
-    , m_graphicsWindow(new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height()))
     , m_updateMode(UpdateMode::OnInputEvent)
   {
     setTextureFormat(GL_RGBA16F_ARB);
+
     //setTextureFormat(GL_RGB16F);
 
     //auto surfaceFormat = format();
@@ -70,16 +70,21 @@ namespace QtOsgBridge
 
       layer.view   = new osgHelper::View();
 
-      layer.view->setOpenGLContextControlFunctions(std::bind(&QtOsgWidget::makeCurrent, this),
-                                                   std::bind(&QtOsgWidget::doneCurrent, this));
+      layer.graphics = new osgViewer::GraphicsWindowEmbedded(x(), y(), w, h);
 
-      layer.view->getCamera()->setGraphicsContext(m_graphicsWindow);
+      layer.view->getCamera()->setGraphicsContext(layer.graphics);
       layer.view->updateViewport(0, 0, w, h, pixelRatio);
 
       layer.viewer = new osgViewer::CompositeViewer();
       layer.viewer->addView(layer.view);
       layer.viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
       layer.viewer->realize();
+
+      layer.view->setOpenGLMakeContextCurrentFunction(std::bind(&QtOsgWidget::makeCurrent, this),
+                                                      std::bind(&QtOsgWidget::doneCurrent, this));
+
+      //layer.view->setOpenGLMakeContextCurrentFunction(
+      //  std::bind(&osgViewer::GraphicsWindowEmbedded::makeCurrent, layer.graphics.get()));
 
       m_renderLayers[i] = layer;
     }
@@ -151,27 +156,32 @@ namespace QtOsgBridge
 
   void QtOsgWidget::paintGL()
   {
-    //QPainter painter(this);
-    //painter.beginNativePainting();
+    makeCurrent();
 
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i = 0; i < numViewers; i++)
     {
-        m_renderLayers[i].viewer->frame();
+      auto& layer = m_renderLayers[i];
+
+      //layer.graphics->makeCurrent();
+      layer.viewer->frame();
+      //layer.graphics->swapBuffers();
     }
 
-    //painter.endNativePainting();
+    doneCurrent();
   }
 
   void QtOsgWidget::resizeGL(int width, int height)
   {
-    m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
-    m_graphicsWindow->resized(x(), y(), width, height);
-
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i=0; i<numViewers; i++)
     {
-      auto view = m_renderLayers[i].view;
+      auto view     = m_renderLayers[i].view;
+      auto graphics = m_renderLayers[i].graphics;
+
+      graphics->getEventQueue()->windowResize(x(), y(), width, height);
+      graphics->resized(x(), y(), width, height);
+
       view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
       view->getSceneCamera()->updateResolution(osg::Vec2i(width, height));
     }
@@ -179,9 +189,7 @@ namespace QtOsgBridge
 
   void QtOsgWidget::paintEvent(QPaintEvent* paintEvent)
   {
-    makeCurrent();
     paintGL();
-    doneCurrent();
   }
 
   void QtOsgWidget::keyPressEvent(QKeyEvent* event)
@@ -191,7 +199,10 @@ namespace QtOsgBridge
     const auto keyString = event->text();
     const auto keyData   = keyString.toLocal8Bit().data();
 
-    m_graphicsWindow->getEventQueue()->keyPress(osgGA::GUIEventAdapter::KeySymbol(*keyData));
+    handleEvent([keyData](osgGA::EventQueue* queue)
+    {
+      return queue->keyPress(osgGA::GUIEventAdapter::KeySymbol(*keyData));
+    });
   }
 
   void QtOsgWidget::keyReleaseEvent(QKeyEvent* event)
@@ -201,7 +212,10 @@ namespace QtOsgBridge
     const auto keyString = event->text();
     const auto keyData   = keyString.toLocal8Bit().data();
 
-    m_graphicsWindow->getEventQueue()->keyRelease(osgGA::GUIEventAdapter::KeySymbol(*keyData));
+    handleEvent([keyData](osgGA::EventQueue* queue)
+    {
+      return queue->keyRelease(osgGA::GUIEventAdapter::KeySymbol(*keyData));
+    });
   }
 
   void QtOsgWidget::mouseMoveEvent(QMouseEvent* event)
@@ -210,18 +224,24 @@ namespace QtOsgBridge
 
     const auto pixelRatio = devicePixelRatio();
 
-    m_graphicsWindow->getEventQueue()->mouseMotion(static_cast<float>(event->x() * pixelRatio),
-                                                   static_cast<float>(event->y() * pixelRatio));
+    handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
+    {
+      return queue->mouseMotion(static_cast<float>(event->x() * pixelRatio),
+          static_cast<float>(event->y() * pixelRatio));
+    });
   }
 
   void QtOsgWidget::mousePressEvent(QMouseEvent* event)
   {
-      GLWidgetBase::mousePressEvent(event);
+    GLWidgetBase::mousePressEvent(event);
 
     const auto pixelRatio = devicePixelRatio();
 
-    m_graphicsWindow->getEventQueue()->mouseButtonPress(static_cast<float>(event->x() * pixelRatio),
-        static_cast<float>(event->y() * pixelRatio), getOsgMouseButton(event));
+    handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
+    {
+      return queue->mouseButtonPress(static_cast<float>(event->x() * pixelRatio),
+          static_cast<float>(event->y() * pixelRatio), getOsgMouseButton(event));
+    });
   }
 
   void QtOsgWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -230,8 +250,11 @@ namespace QtOsgBridge
 
     const auto pixelRatio = devicePixelRatio();
 
-    m_graphicsWindow->getEventQueue()->mouseButtonRelease(static_cast<float>(event->x() * pixelRatio),
-        static_cast<float>(event->y() * pixelRatio), getOsgMouseButton(event));
+    handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
+    {
+        return queue->mouseButtonRelease(static_cast<float>(event->x() * pixelRatio),
+            static_cast<float>(event->y() * pixelRatio), getOsgMouseButton(event));
+    });
   }
 
   void QtOsgWidget::wheelEvent(QWheelEvent* event)
@@ -243,7 +266,10 @@ namespace QtOsgBridge
     const auto delta  = event->angleDelta();
     const auto motion = (delta.y() > 0) ? osgGA::GUIEventAdapter::SCROLL_UP : osgGA::GUIEventAdapter::SCROLL_DOWN;
 
-    m_graphicsWindow->getEventQueue()->mouseScroll(motion);
+    handleEvent([motion](osgGA::EventQueue* queue)
+    {
+      return queue->mouseScroll(motion);
+    });
   }
 
   bool QtOsgWidget::event(QEvent* event)
@@ -272,5 +298,23 @@ namespace QtOsgBridge
     }
 
     return handled;
+  }
+
+  void QtOsgWidget::handleEvent(const EventHandlerFunc& handlerFunc) const
+  {
+    bool handled = false;
+    std::for_each(m_renderLayers.rbegin(), m_renderLayers.rend(), [&handled, &handlerFunc](const RenderLayer& layer)
+    {
+      if (handled)
+      {
+        return;
+      }
+
+      const auto adapter = handlerFunc(layer.graphics->getEventQueue());
+      if (adapter && adapter->getHandled())
+      {
+        handled = true;
+      }
+    });
   }
 }
