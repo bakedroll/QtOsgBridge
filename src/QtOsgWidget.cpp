@@ -69,7 +69,7 @@ namespace QtOsgBridge
     const auto numLayers = static_cast<int>(ViewType::_Count);
     m_renderLayers.resize(numLayers);
 
-    const auto traits    = new osg::GraphicsContext::Traits();
+    /*const auto traits    = new osg::GraphicsContext::Traits();
     traits->alpha        = 16;
     traits->red          = 16;
     traits->green        = 16;
@@ -80,10 +80,11 @@ namespace QtOsgBridge
     traits->x            = x();
     traits->y            = y();
     traits->width        = w;
-    traits->height       = h;
+    traits->height       = h;*/
     //traits->setInheritedWindowPixelFormat = true;
 
-    m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(traits);
+    m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(0, 0, w * pixelRatio, h * pixelRatio);
+    //m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(traits);
     //m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded();
 
     /*QSurfaceFormat format;
@@ -125,8 +126,8 @@ namespace QtOsgBridge
       layer.viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
       layer.viewer->setReleaseContextAtEndOfFrameHint(false);
 
-      osgViewer::Viewer::Windows windows;
-      layer.viewer->getWindows(windows);
+      //osgViewer::Viewer::Windows windows;
+      //layer.viewer->getWindows(windows);
 
       layer.viewer->realize();
 
