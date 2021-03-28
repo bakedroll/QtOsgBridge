@@ -2,8 +2,9 @@
 
 #include <osgHelper/Macros.h>
 
+#include <osgViewer/Viewer>
+
 #include <QKeyEvent>
-#include <QOpenGLContext>
 #include <QPainter>
 
 namespace QtOsgBridge
@@ -36,8 +37,11 @@ namespace QtOsgBridge
   QtOsgWidget::QtOsgWidget(QWidget* parent)
     : GLWidgetBase(parent)
     , m_updateMode(UpdateMode::OnInputEvent)
+    , m_isFirstFrame(true)
   {
-    setTextureFormat(GL_RGBA16F_ARB);
+    //setTextureFormat(GL_RGBA16F_ARB);
+
+
 
     //setTextureFormat(GL_RGB16F);
 
@@ -64,24 +68,76 @@ namespace QtOsgBridge
 
     const auto numLayers = static_cast<int>(ViewType::_Count);
     m_renderLayers.resize(numLayers);
+
+    const auto traits    = new osg::GraphicsContext::Traits();
+    traits->alpha        = 16;
+    traits->red          = 16;
+    traits->green        = 16;
+    traits->blue         = 16;
+    traits->depth        = 8;
+    traits->doubleBuffer = false;
+    traits->format       = GL_RGBA16F_ARB;
+    traits->x            = x();
+    traits->y            = y();
+    traits->width        = w;
+    traits->height       = h;
+    //traits->setInheritedWindowPixelFormat = true;
+
+    m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(traits);
+    //m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded();
+
+    /*QSurfaceFormat format;
+    format.setVersion(2, 1);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+
+    format.setRedBufferSize(16);
+    format.setGreenBufferSize(16);
+    format.setBlueBufferSize(16);
+    format.setAlphaBufferSize(16);
+    format.setColorSpace(QSurfaceFormat::ColorSpace::sRGBColorSpace);
+    format.setDepthBufferSize(8);
+    format.setSwapBehavior(QSurfaceFormat::SwapBehavior::SingleBuffer);
+    format.setRenderableType(QSurfaceFormat::RenderableType::OpenGL);
+
+    setFormat(format);*/
+
+    /*QTimer::singleShot(0, [this, format]()
+    {
+      auto c = context();
+      c->setFormat(format);
+    });*/
+
     for (auto i=0; i<numLayers; i++)
     {
       RenderLayer layer;
 
-      layer.view   = new osgHelper::View();
+      layer.view = new osgHelper::View();
 
-      layer.graphics = new osgViewer::GraphicsWindowEmbedded(x(), y(), w, h);
+      // layer.graphics = new osgViewer::GraphicsWindowEmbedded(traits);
 
-      layer.view->getCamera()->setGraphicsContext(layer.graphics);
+      layer.view->getSceneCamera()->setGraphicsContext(m_graphicsWindow);
       layer.view->updateViewport(0, 0, w, h, pixelRatio);
+
+      m_graphicsWindow->getEventQueue()->syncWindowRectangleWithGraphicsContext();
 
       layer.viewer = new osgViewer::CompositeViewer();
       layer.viewer->addView(layer.view);
       layer.viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+      layer.viewer->setReleaseContextAtEndOfFrameHint(false);
+
+      osgViewer::Viewer::Windows windows;
+      layer.viewer->getWindows(windows);
+
       layer.viewer->realize();
 
-      layer.view->setOpenGLMakeContextCurrentFunction(std::bind(&QtOsgWidget::makeCurrent, this),
-                                                      std::bind(&QtOsgWidget::doneCurrent, this));
+      //layer.view->setOpenGLMakeContextCurrentFunction(std::bind(&QtOsgWidget::makeCurrent, this),
+      //                                                std::bind(&QtOsgWidget::doneCurrent, this));
+
+      //
+      //
+      //
+      //layer.view->setOpenGLMakeContextCurrentFunction(
+      //        std::bind(&osgViewer::GraphicsWindowEmbedded::makeCurrent, m_graphicsWindow.get()));
 
       //layer.view->setOpenGLMakeContextCurrentFunction(
       //  std::bind(&osgViewer::GraphicsWindowEmbedded::makeCurrent, layer.graphics.get()));
@@ -89,7 +145,7 @@ namespace QtOsgBridge
       m_renderLayers[i] = layer;
     }
 
-    const auto screenStage   = m_renderLayers[static_cast<int>(ViewType::Screen)];
+    /*const auto screenStage   = m_renderLayers[static_cast<int>(ViewType::Screen)];
     auto       sceneStageCam = screenStage.view->getSceneCamera();
 
     sceneStageCam->setClearMask(GL_DEPTH_BUFFER_BIT);
@@ -100,7 +156,7 @@ namespace QtOsgBridge
     stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
     stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
     stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    stateSet->setRenderBinDetails(10, "RenderBin");
+    stateSet->setRenderBinDetails(10, "RenderBin");*/
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -154,9 +210,22 @@ namespace QtOsgBridge
     return m_renderLayers[index].view->getSceneCamera();
   }
 
+  void QtOsgWidget::initializeGL()
+  {
+    initializeOpenGLFunctions();
+  }
+
   void QtOsgWidget::paintGL()
   {
-    makeCurrent();
+    //makeCurrent();
+
+    //m_graphicsWindow->makeCurrent();
+
+	  if (m_isFirstFrame)
+    {
+      m_isFirstFrame = false;
+      m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
+    }
 
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i = 0; i < numViewers; i++)
@@ -168,19 +237,24 @@ namespace QtOsgBridge
       //layer.graphics->swapBuffers();
     }
 
-    doneCurrent();
+    //doneCurrent();
+    //
+    //m_graphicsWindow->swapBuffers();
   }
 
   void QtOsgWidget::resizeGL(int width, int height)
   {
+    m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
+    m_graphicsWindow->resized(x(), y(), width, height);
+
     const auto numViewers = static_cast<int>(ViewType::_Count);
     for (auto i=0; i<numViewers; i++)
     {
       auto view     = m_renderLayers[i].view;
-      auto graphics = m_renderLayers[i].graphics;
+      //auto graphics = m_renderLayers[i].graphics;
 
-      graphics->getEventQueue()->windowResize(x(), y(), width, height);
-      graphics->resized(x(), y(), width, height);
+      //graphics->getEventQueue()->windowResize(x(), y(), width, height);
+      //graphics->resized(x(), y(), width, height);
 
       view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
       view->getSceneCamera()->updateResolution(osg::Vec2i(width, height));
@@ -302,7 +376,10 @@ namespace QtOsgBridge
 
   void QtOsgWidget::handleEvent(const EventHandlerFunc& handlerFunc) const
   {
-    bool handled = false;
+    handlerFunc(m_graphicsWindow->getEventQueue());
+
+
+    /*bool handled = false;
     std::for_each(m_renderLayers.rbegin(), m_renderLayers.rend(), [&handled, &handlerFunc](const RenderLayer& layer)
     {
       if (handled)
@@ -315,6 +392,6 @@ namespace QtOsgBridge
       {
         handled = true;
       }
-    });
+    });*/
   }
 }

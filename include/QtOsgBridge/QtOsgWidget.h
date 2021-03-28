@@ -4,16 +4,16 @@
 #include <osgHelper/Camera.h>
 
 #include <osgViewer/CompositeViewer>
-#include <osgViewer/View>
 
 #include <QOpenGLWidget>
+#include <QOpenGLFunctions>
 #include <QTimer>
 
 namespace QtOsgBridge
 {
   using GLWidgetBase = QOpenGLWidget;
 
-  class QtOsgWidget : public GLWidgetBase
+  class QtOsgWidget : public GLWidgetBase , protected QOpenGLFunctions
   {
     Q_OBJECT
 
@@ -27,7 +27,7 @@ namespace QtOsgBridge
     enum class ViewType
     {
       Scene,
-      Screen,
+      //Screen,
       _Count
     };
 
@@ -40,6 +40,7 @@ namespace QtOsgBridge
     osg::ref_ptr<osgHelper::Camera> getCamera(ViewType type = ViewType::Scene) const;
 
   protected:
+    void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
@@ -59,17 +60,20 @@ namespace QtOsgBridge
     {
       osg::ref_ptr<osgViewer::CompositeViewer>        viewer;
       osg::ref_ptr<osgHelper::View>                   view;
-      osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> graphics;
+      //osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> graphics;
       //osg::ref_ptr<osg::GraphicsContext>              context;
     };
 
     using RenderLayerList  = std::vector<RenderLayer>;
     using EventHandlerFunc = std::function<osgGA::GUIEventAdapter*(osgGA::EventQueue*)>;
 
-    RenderLayerList m_renderLayers;
+    RenderLayerList                                 m_renderLayers;
+    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_graphicsWindow;
 
     QTimer     m_updateTimer;
     UpdateMode m_updateMode;
+
+    bool m_isFirstFrame;
 
     void handleEvent(const EventHandlerFunc& handlerFunc) const;
 
