@@ -1,6 +1,9 @@
 #include <QtOsgBridge/QtOsgWidget.h>
+#include <QtOsgBridge/OverlayCompositor.h>
 
 #include <osgViewer/Viewer>
+
+#include <osg/MatrixTransform>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -36,6 +39,7 @@ namespace QtOsgBridge
     : QOpenGLWidget(parent)
     , m_updateMode(UpdateMode::OnInputEvent)
     , m_isFirstFrame(true)
+    , m_overlayCompositor(new OverlayCompositor(this))
   {
     const auto w          = width();
     const auto h          = height();
@@ -54,6 +58,8 @@ namespace QtOsgBridge
     m_viewer->addView(m_view);
     m_viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
     m_viewer->setReleaseContextAtEndOfFrameHint(false);
+
+    setupVirtualOverlayNodes();
 
     m_viewer->realize();
 
@@ -98,6 +104,11 @@ namespace QtOsgBridge
     return m_view;
   }
 
+  osg::ref_ptr<OverlayCompositor> QtOsgWidget::getOverlayCompositor() const
+  {
+    return m_overlayCompositor;
+  }
+
   void QtOsgWidget::initializeGL()
   {
     initializeOpenGLFunctions();
@@ -113,6 +124,7 @@ namespace QtOsgBridge
       m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
     }
 
+    m_overlayCompositor->renderVirtualOverlays();
     m_viewer->frame();
 
     doneCurrent();
@@ -122,6 +134,9 @@ namespace QtOsgBridge
   {
     m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
     m_graphicsWindow->resized(x(), y(), width, height);
+
+    m_overlayProjection->setMatrix(
+            osg::Matrix::ortho2D(0.0, static_cast<double>(width) - 1.0, static_cast<double>(height) - 1.0, 0.0));
 
     m_view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
   }
@@ -242,5 +257,19 @@ namespace QtOsgBridge
   void QtOsgWidget::handleEvent(const EventHandlerFunc& handlerFunc) const
   {
     handlerFunc(m_graphicsWindow->getEventQueue());
+  }
+
+  void QtOsgWidget::setupVirtualOverlayNodes()
+  {
+    m_overlayProjection = new osg::Projection();
+    m_overlayProjection->addChild(m_overlayCompositor);
+
+    auto stateSet = m_overlayProjection->getOrCreateStateSet();
+    stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    stateSet->setRenderBinDetails(10, "RenderBin");
+    stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+    stateSet->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA), osg::StateAttribute::ON);
+
+    getView()->getCamera(osgHelper::View::CameraType::Screen)->addChild(m_overlayProjection);
   }
 }
