@@ -144,22 +144,7 @@ int QtGameApplication::runGame(const osg::ref_ptr<AbstractEventState>& initialSt
 
 void QtGameApplication::prepareEventState(const osg::ref_ptr<AbstractEventState>& state)
 {
-  state->initialize(m->mainWindow->getViewWidget());
-
-  const auto sceneNode = state->getSceneNode();
-  const auto screenNode = state->getScreenNode();
-
-  const auto view = m->mainWindow->getViewWidget()->getView();
-
-  if (sceneNode.valid())
-  {
-    view->getRootGroup()->addChild(sceneNode);
-  }
-
-  if (screenNode.valid())
-  {
-    view->getCamera(osgHelper::View::CameraType::Screen)->addChild(screenNode);
-  }
+  state->initialize(m->mainWindow);
 }
 
 void QtGameApplication::deinitialize()

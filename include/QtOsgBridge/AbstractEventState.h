@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtOsgBridge/QtOsgWidget.h>
+#include <QtOsgBridge/MainWindow.h>
 
 #include <osgHelper/ioc/Injector.h>
 #include <osgHelper/Macros.h>
@@ -33,10 +33,7 @@ public:
   virtual ~AbstractEventState() = default;
 
   virtual bool isLoadingState() const = 0;
-  virtual void initialize(QtOsgWidget* widget) {}
-
-  virtual osg::ref_ptr<osg::Node> getSceneNode() const = 0;
-  virtual osg::ref_ptr<osg::Node> getScreenNode() const = 0;
+  virtual void initialize(MainWindow* mainWindow) {}
 
   template <typename TState>
   void requestStateEvent(StateRequestType type)
