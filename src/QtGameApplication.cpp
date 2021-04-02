@@ -19,9 +19,11 @@ class FileLogger : public osgHelper::Logger
 public:
   FileLogger(const QString& directory)
   {
-    QDir dir(directory);
+    const QDir dir(directory);
     if (!dir.exists())
+    {
       dir.mkpath(".");
+    }
 
     const auto filename =
             dir.filePath(QString("%1.txt").arg(QDateTime::currentDateTime().toString("yy-MM-dd_HH.mm.ss")));
@@ -145,6 +147,8 @@ int QtGameApplication::runGame(const osg::ref_ptr<AbstractEventState>& initialSt
 void QtGameApplication::prepareEventState(const osg::ref_ptr<AbstractEventState>& state)
 {
   state->initialize(m->mainWindow);
+
+  // connect(state.get(), &AbstractEventState::forwardStateRequest)
 }
 
 void QtGameApplication::deinitialize()
