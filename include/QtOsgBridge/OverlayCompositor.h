@@ -16,8 +16,8 @@ namespace QtOsgBridge
     OverlayCompositor(QWidget* parent);
     ~OverlayCompositor();
 
-    void addVirtualOverlay(VirtualOverlay* overlay);
-    void removeVirtualOverlay(VirtualOverlay* overlay);
+    void addVirtualOverlay(const QPointer<VirtualOverlay>& overlay);
+    void removeVirtualOverlay(const QPointer<VirtualOverlay>& overlay);
 
     void clear();
 

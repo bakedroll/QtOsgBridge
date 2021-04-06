@@ -58,16 +58,10 @@ struct QtGameApplication::Impl
 {
   Impl()
     : mainWindow(nullptr)
-    , oFullscreenEnabled(new osgHelper::Observable<bool>(false))
   {
   }
 
   QtOsgBridge::MainWindow* mainWindow;
-
-  osgHelper::Observable<bool>::Ptr oFullscreenEnabled;
-
-  osgHelper::Observer<void>::Ptr endGameObserver;
-  osgHelper::Observer<bool>::Ptr fullscreenEnabledObserver;
 };
 
 QtGameApplication::QtGameApplication(int& argc, char** argv)
@@ -83,30 +77,14 @@ QtGameApplication::QtGameApplication(int& argc, char** argv)
 
   m->mainWindow = new MainWindow();
   m->mainWindow->show();
-
-  m->endGameObserver = onEndGameSignal().connect([this]()
-  {
-    m->mainWindow->shutdown();
-  });
-
-  m->fullscreenEnabledObserver = m->oFullscreenEnabled->connect([this](bool enabled)
-  {
-    if (m->mainWindow->isFullScreen() == enabled)
-      return;
-
-    if (enabled)
-      m->mainWindow->showFullScreen();
-    else
-      m->mainWindow->showNormal();
-  });
 }
 
 QtGameApplication::~QtGameApplication() = default;
 
-void QtGameApplication::action(osg::Object* object, osg::Object* data, double simTime, double timeDiff)
+/*void QtGameApplication::action(osg::Object* object, osg::Object* data, double simTime, double timeDiff)
 {
 
-}
+}*/
 
 bool QtGameApplication::notify(QObject* receiver, QEvent* event)
 {
@@ -118,23 +96,27 @@ bool QtGameApplication::notify(QObject* receiver, QEvent* event)
   return false;
 }
 
-int QtGameApplication::runGame(const osg::ref_ptr<AbstractEventState>& initialState)
+int QtGameApplication::runGame()
 {
-  return safeExecute([&]()
+  return safeExecute([this]()
   {
-    const auto view = m->mainWindow->getViewWidget()->getView();
+    if (m_states.size() != 1)
+    {
+      OSGG_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
+      return -1;
+    }
 
-    view->getRootGroup()->setUpdateCallback(this);
-
-    prepareEventState(initialState);
+    auto view = m->mainWindow->getViewWidget()->getView();
+    // view->getRootGroup()->setUpdateCallback(this);
 
     OSGG_LOG_INFO("Starting mainloop");
-    const auto ret = mainloop();
+    const auto ret = exec();
 
     deinitialize();
 
     // shutdown/free all pointers
-    view->setSceneData(nullptr);
+    m_states.clear();
+    view->cleanUp();
 
     container().clear();
 
@@ -144,11 +126,15 @@ int QtGameApplication::runGame(const osg::ref_ptr<AbstractEventState>& initialSt
   });
 }
 
-void QtGameApplication::prepareEventState(const osg::ref_ptr<AbstractEventState>& state)
+void QtGameApplication::prepareEventState(StateData& data)
 {
-  state->initialize(m->mainWindow);
+  data.state->onInitialize(m->mainWindow);
+  m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
 
-  // connect(state.get(), &AbstractEventState::forwardStateRequest)
+  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardNewEventStateRequest, this,
+                                     &QtGameApplication::onNewEventStateRequest));
+  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardExitEventStateRequest, this,
+                                     &QtGameApplication::onExitEventStateRequest));
 }
 
 void QtGameApplication::deinitialize()
@@ -159,15 +145,63 @@ void QtGameApplication::deinitialize()
   delete m->mainWindow;
 }
 
-int QtGameApplication::mainloop()
-{
-  return exec();
-}
-
 void QtGameApplication::onException(const std::string& message)
 {
   QMessageBox::critical(nullptr, tr("Fatal error"), tr("A critical exception occured: %1").arg(QString::fromLocal8Bit(message.c_str())));
   quit();
+}
+
+void QtGameApplication::pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state)
+{
+  StateData data;
+  data.state = state;
+
+  m_states.push_back(data);
+  prepareEventState(data);
+}
+
+void QtGameApplication::exitState(const osg::ref_ptr<AbstractEventState>& state)
+{
+  for (auto it = m_states.begin(); it != m_states.end(); ++it)
+  {
+    if (it->state == state)
+    {
+      m->mainWindow->removeEventFilter(state.get());
+      state->onExit();
+
+      m_states.erase(it);
+      return;
+    }
+  }
+
+  OSGG_LOG_FATAL("Attempting to exit unknown state");
+}
+
+void QtGameApplication::onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
+                                               AbstractEventState::NewEventStateMode   mode,
+                                               const osg::ref_ptr<AbstractEventState>& newState)
+{
+  if (mode == AbstractEventState::NewEventStateMode::ExitCurrent)
+  {
+    exitState(current);
+  }
+
+  pushAndPrepareState(newState);
+}
+
+void QtGameApplication::onExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
+                                                AbstractEventState::ExitEventStateMode  mode)
+{
+  if (mode == AbstractEventState::ExitEventStateMode::ExitCurrent)
+  {
+    exitState(current);
+    return;
+  }
+
+  for (const auto& data : m_states)
+  {
+    exitState(data.state);
+  }
 }
 
 }

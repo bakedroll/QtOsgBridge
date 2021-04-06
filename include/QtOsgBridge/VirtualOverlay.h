@@ -14,7 +14,7 @@ namespace QtOsgBridge
 
   public:
     VirtualOverlay();
-    ~VirtualOverlay();
+    virtual ~VirtualOverlay();
 
     osg::ref_ptr<osg::Node> getRootNode() const;
 

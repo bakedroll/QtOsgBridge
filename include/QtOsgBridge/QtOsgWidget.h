@@ -27,6 +27,7 @@ public:
   };
 
   QtOsgWidget(QWidget* parent = nullptr);
+  virtual ~QtOsgWidget();
 
   void setUpdateMode(UpdateMode mode);
   void setTargetFps(int fps);

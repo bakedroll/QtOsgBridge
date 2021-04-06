@@ -2,15 +2,16 @@
 #include <QtOsgBridge/VirtualOverlay.h>
 
 #include <QGridLayout>
+#include <QPointer>
 
 namespace QtOsgBridge
 {
 
 void deleteLayout(QLayout* layout)
 {
-  QLayoutItem* item      = nullptr;
-  QLayout*     sublayout = nullptr;
-  QWidget*     widget    = nullptr;
+  QLayoutItem*          item = nullptr;
+  QPointer<QLayout>     sublayout;
+  QPointer<QWidget>     widget;
 
   while ((item = layout->takeAt(0)))
   {
@@ -21,7 +22,7 @@ void deleteLayout(QLayout* layout)
     else if ((widget = item->widget()) != nullptr)
     {
       widget->hide();
-      delete widget;
+      widget->deleteLater();
     }
     else
     {
@@ -29,7 +30,7 @@ void deleteLayout(QLayout* layout)
     }
   }
 
-  delete layout;
+  layout->deleteLater();
 }
 
 void deleteWidget(QWidget* widget)
@@ -40,20 +41,20 @@ void deleteWidget(QWidget* widget)
   }
 
   widget->hide();
-  delete widget;
+  widget->deleteLater();
 }
 
 struct OverlayCompositor::Impl
 {
-  using OverlaySet = std::set<VirtualOverlay*>;
+  using OverlaySet = std::set<QPointer<VirtualOverlay>>;
 
   Impl()
     : parentWidget(nullptr)
-    , firstFrame(GL_TRUE)
+    , firstFrame(true)
   {}
 
-  QWidget*   parentWidget;
-  OverlaySet overlays;
+  QPointer<QWidget> parentWidget;
+  OverlaySet        overlays;
 
   bool firstFrame;
 };
@@ -66,7 +67,7 @@ OverlayCompositor::OverlayCompositor(QWidget* parent)
 
 OverlayCompositor::~OverlayCompositor() = default;
 
-void OverlayCompositor::addVirtualOverlay(VirtualOverlay* overlay)
+void OverlayCompositor::addVirtualOverlay(const QPointer<VirtualOverlay>& overlay)
 {
   if (m->overlays.count(overlay) > 0)
   {
@@ -79,7 +80,7 @@ void OverlayCompositor::addVirtualOverlay(VirtualOverlay* overlay)
   m->overlays.insert(overlay);
 }
 
-void OverlayCompositor::removeVirtualOverlay(VirtualOverlay* overlay)
+void OverlayCompositor::removeVirtualOverlay(const QPointer<VirtualOverlay>& overlay)
 {
   const auto it = m->overlays.find(overlay);
   if (it == m->overlays.end())

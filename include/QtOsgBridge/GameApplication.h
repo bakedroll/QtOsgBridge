@@ -2,20 +2,17 @@
 
 #include <osgHelper/ioc/Injector.h>
 #include <osgHelper/ioc/InjectionContainer.h>
-#include <osgHelper/SimulationCallback.h>
 #include <osgHelper/Observable.h>
 
 #include <functional>
 
 namespace QtOsgBridge
 {
-  class GameApplication : public osgHelper::SimulationCallback
+  class GameApplication
 	{
   public:
     GameApplication();
-    ~GameApplication() override;
-
-    osgHelper::Signal& onEndGameSignal();
+    virtual ~GameApplication();
 
   protected:
     virtual void initialize(osgHelper::ioc::Injector& injector);
@@ -27,12 +24,9 @@ namespace QtOsgBridge
     virtual void registerComponents(osgHelper::ioc::InjectionContainer& container);
     void registerEssentialComponents();
 
-    virtual int mainloop() = 0;
-
     osgHelper::ioc::InjectionContainer& container();
 
 	private:
     osgHelper::ioc::InjectionContainer m_container;
-    osgHelper::Signal                  m_endGameSignal;
   };
 }

@@ -16,17 +16,8 @@ using namespace std;
 namespace QtOsgBridge
 {
 
-  GameApplication::GameApplication()
-    : SimulationCallback()
-  {
-  }
-
+  GameApplication::GameApplication() = default;
   GameApplication::~GameApplication() = default;
-
-  osgHelper::Signal& GameApplication::onEndGameSignal()
-  {
-    return m_endGameSignal;
-  }
 
   /*void GameApplication::action(osg::Object* object, osg::Object* data, double simTime, double timeDiff)
   {
@@ -49,7 +40,7 @@ namespace QtOsgBridge
 
             ref_ptr<GameLoadingState> loadingState = dynamic_cast<GameLoadingState*>(state.get());
 
-            AbstractGameState::AbstractGameStateList nextStates;
+            AbstractEventState::AbstractGameStateList nextStates;
             loadingState->getNextStates(*m_injector, nextStates);
 
             for (osgGaming::GameState::AbstractGameStateList::iterator it = nextStates.begin(); it != nextStates.end(); ++it)
@@ -57,7 +48,7 @@ namespace QtOsgBridge
 
             m->prepareStateWorldAndHud(nextStates);
 
-            ref_ptr<AbstractGameState> nextState = *nextStates.begin();
+            ref_ptr<AbstractEventState> nextState = *nextStates.begin();
 
             View::Ptr view = m->viewer->getGamingView(0);
             if (!view)

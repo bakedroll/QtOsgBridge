@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include <QMetaObject>
+
 namespace QtOsgBridge
 {
   class QtGameApplication : public Multithreading, public GameApplication
@@ -27,33 +29,61 @@ namespace QtOsgBridge
 
       initialize(*m_injector);
 
-      auto state = m_injector->inject<TState>();
-      if (!state.valid())
+      if (!injectPushAndPrepareState<TState>())
       {
-        assert(false && "TState has to be an AbstractEventState.");
         return -1;
       }
 
-      return runGame(state);
+      return runGame();
     }
 
-    void action(osg::Object* object, osg::Object* data, double simTime, double timeDiff) override;
+    //void action(osg::Object* object, osg::Object* data, double simTime, double timeDiff) override;
     bool notify(QObject *receiver, QEvent *event) override;
 
   protected:
-    int runGame(const osg::ref_ptr<AbstractEventState>& initialState);
+    struct StateData
+    {
+      osg::ref_ptr<AbstractEventState>     state;
+      std::vector<QMetaObject::Connection> connections;
+    };
 
-    void prepareEventState(const osg::ref_ptr<AbstractEventState>& state);
+    int runGame();
+
+    void prepareEventState(StateData& data);
     void deinitialize() override;
 
-    int mainloop() override;
     void onException(const std::string& message) override;
 
   private:
+    using StateList = std::vector<StateData>;
+
     struct Impl;
     std::unique_ptr<Impl> m;
 
     osgHelper::ioc::Injector* m_injector;
 
+    StateList m_states;
+
+    template <typename TState>
+    bool injectPushAndPrepareState()
+    {
+      auto state = m_injector->inject<TState>();
+      assert_return(state.valid(), false);
+
+      pushAndPrepareState(state);
+
+      return true;
+    }
+
+    void pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state);
+    void exitState(const osg::ref_ptr<AbstractEventState>& state);
+
+  private Q_SLOTS:
+    void onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
+                                AbstractEventState::NewEventStateMode   mode,
+                                const osg::ref_ptr<AbstractEventState>& newState);
+    void onExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
+                                 AbstractEventState::ExitEventStateMode  mode);
   };
+
 }

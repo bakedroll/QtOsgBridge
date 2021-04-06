@@ -11,7 +11,7 @@ namespace QtOsgBridge
   {
   public:
     MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
+    virtual ~MainWindow();
 
     QtOsgWidget* getViewWidget() const;
 

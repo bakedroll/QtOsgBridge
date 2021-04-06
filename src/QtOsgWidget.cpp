@@ -3,8 +3,6 @@
 
 #include <osgViewer/Viewer>
 
-#include <osg/MatrixTransform>
-
 #include <QKeyEvent>
 #include <QPainter>
 
@@ -75,6 +73,11 @@ namespace QtOsgBridge
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_OpaquePaintEvent, false);
     setAutoFillBackground(false);
+  }
+
+  QtOsgWidget::~QtOsgWidget()
+  {
+    m_overlayCompositor->clear();
   }
 
   void QtOsgWidget::setUpdateMode(UpdateMode mode)
