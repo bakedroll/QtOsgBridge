@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QtOsgBridge/MainWindow.h>
+#include <QtOsgBridge/Multithreading.h>
 
 #include <osgHelper/ioc/Injector.h>
 #include <osgHelper/Macros.h>
+#include <osgHelper/SimulationCallback.h>
 
 namespace QtOsgBridge
 {
@@ -25,29 +27,37 @@ public:
     ExitAll
   };
 
+  using SimulationData = osgHelper::SimulationCallback::SimulationData;
+
   explicit AbstractEventState(osgHelper::ioc::Injector& injector);
 
   virtual ~AbstractEventState() = default;
 
-  virtual bool isLoadingState() const = 0;
-  virtual void onInitialize(MainWindow* mainWindow);
+  virtual void onInitialize(QPointer<MainWindow> mainWindow);
+  virtual void onUpdate(const SimulationData& data);
   virtual void onExit();
 
   template <typename TState>
   void requestNewEventState(NewEventStateMode mode)
   {
-    const auto state = m_injector->inject<TState>();
-    assert_return(state.valid());
+    Multithreading::executeInUiAsync([this, mode]()
+    {
+      const auto state = m_injector->inject<TState>();
+      assert_return(state.valid());
 
-    Q_EMIT forwardNewEventStateRequest(this, mode, state);
+      Q_EMIT forwardNewEventStateRequest(this, mode, state);
+    });
   }
 
   void requestExitEventState(ExitEventStateMode mode);
+  void requestResetTimeDelta();
 
 Q_SIGNALS:
   void forwardNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current, NewEventStateMode mode,
                                    const osg::ref_ptr<AbstractEventState>& newState);
   void forwardExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current, ExitEventStateMode mode);
+
+  void forwardResetTimeDeltaRequest();
 
 private:
   osgHelper::ioc::Injector* m_injector;

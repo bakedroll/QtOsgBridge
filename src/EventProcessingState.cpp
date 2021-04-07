@@ -11,11 +11,6 @@ EventProcessingState::EventProcessingState(osgHelper::ioc::Injector& injector)
 
 }
 
-bool EventProcessingState::isLoadingState() const
-{
-  return false;
-}
-
 bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
 {
   switch (event->type())

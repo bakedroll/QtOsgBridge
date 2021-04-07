@@ -10,7 +10,6 @@ class EventProcessingState : public AbstractEventState
 public:
   EventProcessingState(osgHelper::ioc::Injector& injector);
 
-  bool isLoadingState() const override;
   bool eventFilter(QObject* object, QEvent* event) override;
 
 protected:

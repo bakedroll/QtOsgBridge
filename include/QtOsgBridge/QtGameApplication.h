@@ -3,6 +3,9 @@
 #include <QtOsgBridge/Multithreading.h>
 #include <QtOsgBridge/GameApplication.h>
 #include <QtOsgBridge/AbstractEventState.h>
+#include <QtOsgBridge/GameUpdateCallback.h>
+
+#include <osgHelper/SimulationCallback.h>
 
 #include <memory>
 
@@ -37,7 +40,6 @@ namespace QtOsgBridge
       return runGame();
     }
 
-    //void action(osg::Object* object, osg::Object* data, double simTime, double timeDiff) override;
     bool notify(QObject *receiver, QEvent *event) override;
 
   protected:
@@ -62,7 +64,8 @@ namespace QtOsgBridge
 
     osgHelper::ioc::Injector* m_injector;
 
-    StateList m_states;
+    StateList                        m_states;
+    osg::ref_ptr<GameUpdateCallback> m_updateCallback;
 
     template <typename TState>
     bool injectPushAndPrepareState()
@@ -75,6 +78,7 @@ namespace QtOsgBridge
       return true;
     }
 
+    void updateStates(const osgHelper::SimulationCallback::SimulationData& data);
     void pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state);
     void exitState(const osg::ref_ptr<AbstractEventState>& state);
 

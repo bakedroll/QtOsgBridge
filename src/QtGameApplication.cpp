@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QPointer>
 
 #include <cassert>
 
@@ -61,7 +62,7 @@ struct QtGameApplication::Impl
   {
   }
 
-  QtOsgBridge::MainWindow* mainWindow;
+  QPointer<MainWindow> mainWindow;
 };
 
 QtGameApplication::QtGameApplication(int& argc, char** argv)
@@ -80,11 +81,6 @@ QtGameApplication::QtGameApplication(int& argc, char** argv)
 }
 
 QtGameApplication::~QtGameApplication() = default;
-
-/*void QtGameApplication::action(osg::Object* object, osg::Object* data, double simTime, double timeDiff)
-{
-
-}*/
 
 bool QtGameApplication::notify(QObject* receiver, QEvent* event)
 {
@@ -106,15 +102,22 @@ int QtGameApplication::runGame()
       return -1;
     }
 
+    m_updateCallback = new GameUpdateCallback(std::bind(&QtGameApplication::updateStates, this, std::placeholders::_1));
+
     auto view = m->mainWindow->getViewWidget()->getView();
-    // view->getRootGroup()->setUpdateCallback(this);
+    view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
     OSGG_LOG_INFO("Starting mainloop");
     const auto ret = exec();
 
+    // shutdown/free all pointers
+    for (auto& state : m_states)
+    {
+      state.state->onExit();
+    }
+
     deinitialize();
 
-    // shutdown/free all pointers
     m_states.clear();
     view->cleanUp();
 
@@ -128,27 +131,50 @@ int QtGameApplication::runGame()
 
 void QtGameApplication::prepareEventState(StateData& data)
 {
-  data.state->onInitialize(m->mainWindow);
-  m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
-
   data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardNewEventStateRequest, this,
                                      &QtGameApplication::onNewEventStateRequest));
   data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardExitEventStateRequest, this,
                                      &QtGameApplication::onExitEventStateRequest));
+
+  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardResetTimeDeltaRequest, [this]()
+  {
+    m_updateCallback->resetTimeDelta();
+  }));
+
+  data.state->onInitialize(m->mainWindow);
+  m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
 }
 
 void QtGameApplication::deinitialize()
 {
   OSGG_LOG_INFO("Application shutting down");
 
-  m->mainWindow->close();
-  delete m->mainWindow;
+  if (m->mainWindow->isVisible())
+  {
+    m->mainWindow->close();
+  }
+
+  m->mainWindow->deleteLater();
 }
 
 void QtGameApplication::onException(const std::string& message)
 {
   QMessageBox::critical(nullptr, tr("Fatal error"), tr("A critical exception occured: %1").arg(QString::fromLocal8Bit(message.c_str())));
   quit();
+}
+
+void QtGameApplication::updateStates(const osgHelper::SimulationCallback::SimulationData& data)
+{
+  if (m_states.empty() && m->mainWindow->isVisible())
+  {
+    OSGG_LOG_DEBUG("Empty state list. Closing mainwindow");
+    m->mainWindow->close();
+  }
+
+  for (auto& state : m_states)
+  {
+    state.state->onUpdate(data);
+  }
 }
 
 void QtGameApplication::pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state)

@@ -1,5 +1,7 @@
 #include <QtOsgBridge/AbstractEventState.h>
 
+#include <QPointer>
+
 namespace QtOsgBridge
 {
 
@@ -10,7 +12,11 @@ AbstractEventState::AbstractEventState(osgHelper::ioc::Injector& injector)
 {
 }
 
-void AbstractEventState::onInitialize(MainWindow* mainWindow)
+void AbstractEventState::onInitialize(QPointer<MainWindow> mainWindow)
+{
+}
+
+void AbstractEventState::onUpdate(const SimulationData& data)
 {
 }
 
@@ -20,7 +26,18 @@ void AbstractEventState::onExit()
 
 void AbstractEventState::requestExitEventState(ExitEventStateMode mode)
 {
-  Q_EMIT forwardExitEventStateRequest(this, mode);
+  Multithreading::executeInUiAsync([this, mode]()
+  {
+    Q_EMIT forwardExitEventStateRequest(this, mode);
+  });
+}
+
+void AbstractEventState::requestResetTimeDelta()
+{
+  Multithreading::executeInUiAsync([this]()
+  {
+    Q_EMIT forwardResetTimeDeltaRequest();
+  });
 }
 
 }
