@@ -1,6 +1,7 @@
 #include <QtOsgBridge/AbstractEventState.h>
 
 #include <QPointer>
+#include <QResizeEvent>
 
 namespace QtOsgBridge
 {
@@ -24,6 +25,20 @@ void AbstractEventState::onExit()
 {
 }
 
+bool AbstractEventState::eventFilter(QObject* object, QEvent* event)
+{
+  if (event->type() == QEvent::Type::Resize)
+  {
+    const auto resizeEvent = dynamic_cast<QResizeEvent*>(event);
+    assert_return(resizeEvent, false);
+
+    onResizeEvent(resizeEvent);
+    return true;
+  }
+
+  return false;
+}
+
 void AbstractEventState::requestExitEventState(ExitEventStateMode mode)
 {
   Multithreading::executeInUiAsync([this, mode]()
@@ -38,6 +53,10 @@ void AbstractEventState::requestResetTimeDelta()
   {
     Q_EMIT forwardResetTimeDeltaRequest();
   });
+}
+
+void AbstractEventState::onResizeEvent(QResizeEvent* event)
+{
 }
 
 }

@@ -13,6 +13,11 @@ EventProcessingState::EventProcessingState(osgHelper::ioc::Injector& injector)
 
 bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
 {
+  if (AbstractEventState::eventFilter(object, event))
+  {
+    return true;
+  }
+
   switch (event->type())
   {
   case QEvent::Type::KeyPress:

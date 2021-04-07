@@ -37,6 +37,8 @@ public:
   virtual void onUpdate(const SimulationData& data);
   virtual void onExit();
 
+  bool eventFilter(QObject* object, QEvent* event) override;
+
   template <typename TState>
   void requestNewEventState(NewEventStateMode mode)
   {
@@ -58,6 +60,9 @@ Q_SIGNALS:
   void forwardExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current, ExitEventStateMode mode);
 
   void forwardResetTimeDeltaRequest();
+
+protected:
+  void onResizeEvent(QResizeEvent* event);
 
 private:
   osgHelper::ioc::Injector* m_injector;
