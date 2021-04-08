@@ -127,7 +127,7 @@ namespace QtOsgBridge
       m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
     }
 
-    m_overlayCompositor->renderVirtualOverlays();
+    // m_overlayCompositor->renderVirtualOverlays();
     m_viewer->frame();
 
     doneCurrent();

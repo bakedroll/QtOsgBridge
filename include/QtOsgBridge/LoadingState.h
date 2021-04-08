@@ -20,6 +20,9 @@ namespace QtOsgBridge
     virtual void onExitLoading();
     virtual void onLoading() = 0;
 
+  protected Q_SLOTS:
+    virtual void onRequestNewStates() = 0;
+
   private:
     QThread              m_loadingThread;
     LoadingThreadContext m_threadContext;

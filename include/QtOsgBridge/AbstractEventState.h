@@ -40,7 +40,7 @@ public:
   bool eventFilter(QObject* object, QEvent* event) override;
 
   template <typename TState>
-  void requestNewEventState(NewEventStateMode mode)
+  void requestNewEventState(NewEventStateMode mode = NewEventStateMode::ContinueCurrent)
   {
     Multithreading::executeInUiAsync([this, mode]()
     {
@@ -51,7 +51,7 @@ public:
     });
   }
 
-  void requestExitEventState(ExitEventStateMode mode);
+  void requestExitEventState(ExitEventStateMode mode = ExitEventStateMode::ExitCurrent);
   void requestResetTimeDelta();
 
 Q_SIGNALS:
@@ -62,7 +62,7 @@ Q_SIGNALS:
   void forwardResetTimeDeltaRequest();
 
 protected:
-  void onResizeEvent(QResizeEvent* event);
+  virtual void onResizeEvent(QResizeEvent* event);
 
 private:
   osgHelper::ioc::Injector* m_injector;

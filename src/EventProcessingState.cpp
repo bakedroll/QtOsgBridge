@@ -13,11 +13,6 @@ EventProcessingState::EventProcessingState(osgHelper::ioc::Injector& injector)
 
 bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
 {
-  if (AbstractEventState::eventFilter(object, event))
-  {
-    return true;
-  }
-
   switch (event->type())
   {
   case QEvent::Type::KeyPress:
@@ -46,7 +41,7 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
     break;
   }
 
-  return QObject::eventFilter(object, event);
+  return AbstractEventState::eventFilter(object, event);
 }
 
 bool EventProcessingState::onKeyEvent(QKeyEvent* event)

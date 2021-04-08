@@ -58,7 +58,7 @@ struct VirtualOverlay::Impl
             osgHelper::createQuadGeometry(0.0f, static_cast<float>(width) - 1.0f, static_cast<float>(height) - 1.0f,
                                           0.0f, 0.0f, osgHelper::QuadOrientation::XY, false);
 
-    geode->addDrawable(geometry);
+    // geode->addDrawable(geometry);
 
     pixmap = QPixmap(width, height);
     texture->setTextureSize(width, height);
@@ -80,8 +80,8 @@ VirtualOverlay::VirtualOverlay()
   : QWidget(nullptr)
   , m(new Impl())
 {
-  setAttribute(Qt::WA_DontShowOnScreen);
-  setAttribute(Qt::WA_TranslucentBackground);
+  //setAttribute(Qt::WA_DontShowOnScreen);
+  //setAttribute(Qt::WA_TranslucentBackground);
 
   const auto geo = geometry();
 

@@ -33,10 +33,9 @@ bool AbstractEventState::eventFilter(QObject* object, QEvent* event)
     assert_return(resizeEvent, false);
 
     onResizeEvent(resizeEvent);
-    return true;
   }
 
-  return false;
+  return QObject::eventFilter(object, event);
 }
 
 void AbstractEventState::requestExitEventState(ExitEventStateMode mode)

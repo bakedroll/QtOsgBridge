@@ -9,6 +9,7 @@ LoadingState::LoadingState(osgHelper::ioc::Injector& injector)
   : AbstractEventState(injector)
   , m_threadContext(std::bind(&LoadingState::onLoading, this))
 {
+  connect(&m_threadContext, &LoadingThreadContext::workDone, this, &LoadingState::onRequestNewStates);
 }
 
 void LoadingState::onInitialize(QPointer<MainWindow> mainWindow)

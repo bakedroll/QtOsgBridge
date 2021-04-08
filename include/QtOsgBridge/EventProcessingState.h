@@ -2,6 +2,8 @@
 
 #include <QtOsgBridge/AbstractEventState.h>
 
+#include <QPointer>
+
 namespace QtOsgBridge
 {
 

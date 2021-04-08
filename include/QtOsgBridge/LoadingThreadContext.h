@@ -14,6 +14,9 @@ public:
 
   explicit LoadingThreadContext(LoadingFunc func);
 
+Q_SIGNALS:
+  void workDone();
+
 public Q_SLOTS:
   void doWork();
 
