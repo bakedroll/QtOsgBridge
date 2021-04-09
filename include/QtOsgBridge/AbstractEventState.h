@@ -33,7 +33,7 @@ public:
 
   virtual ~AbstractEventState() = default;
 
-  virtual void onInitialize(QPointer<MainWindow> mainWindow);
+  virtual void onInitialize(QPointer<MainWindow> mainWindow, const SimulationData& data);
   virtual void onUpdate(const SimulationData& data);
   virtual void onExit();
 

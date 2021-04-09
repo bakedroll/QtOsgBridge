@@ -12,11 +12,11 @@ namespace QtOsgBridge
   public:
     explicit LoadingState(osgHelper::ioc::Injector& injector);
 
-    void onInitialize(QPointer<MainWindow> mainWindow) override;
+    void onInitialize(QPointer<MainWindow> mainWindow, const SimulationData& data) override;
     void onExit() override;
 
   protected:
-    virtual void onInitializeLoading(QPointer<MainWindow> mainWindow);
+    virtual void onInitializeLoading(QPointer<MainWindow> mainWindow, const SimulationData& data);
     virtual void onExitLoading();
     virtual void onLoading() = 0;
 

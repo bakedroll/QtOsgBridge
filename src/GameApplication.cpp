@@ -31,12 +31,12 @@ namespace QtOsgBridge
     }
     catch (osgHelper::GameException& e)
     {
-      OSGG_LOG_FATAL(std::string("Exception: ") + e.getMessage());
+      OSGH_LOG_FATAL(std::string("Exception: ") + e.getMessage());
       onException(e.getMessage());
     }
     catch (exception& e)
     {
-      OSGG_LOG_FATAL(std::string("Exception: ") + std::string(e.what()));
+      OSGH_LOG_FATAL(std::string("Exception: ") + std::string(e.what()));
       onException(e.what());
     }
 

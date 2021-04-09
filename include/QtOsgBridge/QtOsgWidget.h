@@ -28,7 +28,8 @@ public:
   void setUpdateMode(UpdateMode mode);
   void setTargetFps(int fps);
 
-  osg::ref_ptr<osgHelper::View> getView() const;
+  osg::ref_ptr<osgHelper::View>            getView() const;
+  osg::ref_ptr<osgViewer::CompositeViewer> getViewer() const;
 
   void addOverlayWidget(const QPointer<QWidget> widget);
 
@@ -36,6 +37,8 @@ protected:
   void initializeGL() override;
   void paintGL() override;
   void resizeGL(int width, int height) override;
+
+  bool event(QEvent* e) override;
 
   void paintEvent(QPaintEvent* paintEvent) override;
   void keyPressEvent(QKeyEvent* event) override;
@@ -45,8 +48,6 @@ protected:
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
   void wheelEvent(QWheelEvent* event) override;
-
-  bool event(QEvent* event) override;
 
 private:
   using EventHandlerFunc = std::function<osgGA::GUIEventAdapter*(osgGA::EventQueue*)>;

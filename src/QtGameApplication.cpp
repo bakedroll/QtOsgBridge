@@ -59,10 +59,12 @@ struct QtGameApplication::Impl
 {
   Impl()
     : mainWindow(nullptr)
+    , simData({0.0, 0.0})
   {
   }
 
-  QPointer<MainWindow> mainWindow;
+  QPointer<MainWindow>               mainWindow;
+  AbstractEventState::SimulationData simData;
 };
 
 QtGameApplication::QtGameApplication(int& argc, char** argv)
@@ -98,7 +100,7 @@ int QtGameApplication::runGame()
   {
     if (m_states.size() != 1)
     {
-      OSGG_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
+      OSGH_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
       return -1;
     }
 
@@ -107,7 +109,7 @@ int QtGameApplication::runGame()
     auto view = m->mainWindow->getViewWidget()->getView();
     view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
-    OSGG_LOG_INFO("Starting mainloop");
+    OSGH_LOG_INFO("Starting mainloop");
     const auto ret = exec();
 
     // shutdown/free all pointers
@@ -141,13 +143,13 @@ void QtGameApplication::prepareEventState(StateData& data)
     m_updateCallback->resetTimeDelta();
   }));
 
-  data.state->onInitialize(m->mainWindow);
+  data.state->onInitialize(m->mainWindow, m->simData);
   m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
 }
 
 void QtGameApplication::deinitialize()
 {
-  OSGG_LOG_INFO("Application shutting down");
+  OSGH_LOG_INFO("Application shutting down");
 
   if (m->mainWindow->isVisible())
   {
@@ -165,9 +167,11 @@ void QtGameApplication::onException(const std::string& message)
 
 void QtGameApplication::updateStates(const osgHelper::SimulationCallback::SimulationData& data)
 {
+  m->simData = data;
+
   if (m_states.empty() && m->mainWindow->isVisible())
   {
-    OSGG_LOG_DEBUG("Empty state list. Closing mainwindow");
+    OSGH_LOG_DEBUG("Empty state list. Closing mainwindow");
     m->mainWindow->close();
   }
 
@@ -200,7 +204,7 @@ void QtGameApplication::exitState(const osg::ref_ptr<AbstractEventState>& state)
     }
   }
 
-  OSGG_LOG_FATAL("Attempting to exit unknown state");
+  OSGH_LOG_FATAL("Attempting to exit unknown state");
 }
 
 void QtGameApplication::onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,

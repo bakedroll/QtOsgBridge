@@ -12,9 +12,9 @@ LoadingState::LoadingState(osgHelper::ioc::Injector& injector)
   connect(&m_threadContext, &LoadingThreadContext::workDone, this, &LoadingState::onRequestNewStates);
 }
 
-void LoadingState::onInitialize(QPointer<MainWindow> mainWindow)
+void LoadingState::onInitialize(QPointer<MainWindow> mainWindow, const SimulationData& data)
 {
-  onInitializeLoading(mainWindow);
+  onInitializeLoading(mainWindow, data);
 
   m_threadContext.moveToThread(&m_loadingThread);
   m_loadingThread.start();
@@ -32,7 +32,7 @@ void LoadingState::onExit()
   requestResetTimeDelta();
 }
 
-void LoadingState::onInitializeLoading(QPointer<MainWindow> mainWindow)
+void LoadingState::onInitializeLoading(QPointer<MainWindow> mainWindow, const SimulationData& data)
 {
 }
 

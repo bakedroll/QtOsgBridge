@@ -39,7 +39,9 @@ namespace QtOsgBridge
     , m_updateMode(UpdateMode::OnInputEvent)
     , m_isFirstFrame(true)
   {
-    setTextureFormat(GL_RGBA16F_ARB);
+    setFocusPolicy(Qt::StrongFocus);
+    //setFocus();
+    setMouseTracking(true);
 
     const auto w          = width();
     const auto h          = height();
@@ -60,9 +62,6 @@ namespace QtOsgBridge
     m_viewer->setReleaseContextAtEndOfFrameHint(false);
 
     m_viewer->realize();
-
-    setMouseTracking(true);
-    setFocusPolicy(Qt::StrongFocus);
 
     connect(&m_updateTimer, &QTimer::timeout, this, QOverload<>::of(&QtOsgWidget::update));
 
@@ -104,8 +103,14 @@ namespace QtOsgBridge
     return m_view;
   }
 
+  osg::ref_ptr<osgViewer::CompositeViewer> QtOsgWidget::getViewer() const
+  {
+    return m_viewer;
+  }
+
   void QtOsgWidget::addOverlayWidget(const QPointer<QWidget> widget)
   {
+    widget->setMouseTracking(true);
     widget->setAttribute(Qt::WA_TranslucentBackground);
 
     widget->setParent(this);

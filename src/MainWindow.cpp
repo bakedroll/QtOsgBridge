@@ -5,6 +5,8 @@
 #include <QVBoxLayout>
 #include <QScreen>
 
+#include <QMouseEvent>
+
 namespace QtOsgBridge
 {
 
@@ -32,6 +34,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     break;
   }
+
   setCentralWidget(m->osgWidget);
 }
 

@@ -13,7 +13,7 @@ AbstractEventState::AbstractEventState(osgHelper::ioc::Injector& injector)
 {
 }
 
-void AbstractEventState::onInitialize(QPointer<MainWindow> mainWindow)
+void AbstractEventState::onInitialize(QPointer<MainWindow> mainWindow, const SimulationData& data)
 {
 }
 
