@@ -39,6 +39,8 @@ namespace QtOsgBridge
     , m_updateMode(UpdateMode::OnInputEvent)
     , m_isFirstFrame(true)
   {
+    setTextureFormat(GL_RGBA16F_ARB);
+
     const auto w          = width();
     const auto h          = height();
     const auto pixelRatio = devicePixelRatio();
