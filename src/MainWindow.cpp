@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow() = default;
 
-QtOsgWidget* MainWindow::getViewWidget() const
+QPointer<QtOsgWidget> MainWindow::getViewWidget() const
 {
   return m->osgWidget;
 }

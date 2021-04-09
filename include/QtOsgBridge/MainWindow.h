@@ -3,6 +3,8 @@
 #include <QMainWindow>
 #include <memory>
 
+#include <QPointer>
+
 #include <QtOsgBridge/QtOsgWidget.h>
 
 namespace QtOsgBridge
@@ -13,7 +15,7 @@ namespace QtOsgBridge
     MainWindow(QWidget* parent = nullptr);
     virtual ~MainWindow();
 
-    QtOsgWidget* getViewWidget() const;
+    QPointer<QtOsgWidget> getViewWidget() const;
 
     void shutdown();
 

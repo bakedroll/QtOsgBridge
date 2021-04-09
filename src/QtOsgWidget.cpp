@@ -1,10 +1,11 @@
 #include <QtOsgBridge/QtOsgWidget.h>
-#include <QtOsgBridge/OverlayCompositor.h>
 
 #include <osgViewer/Viewer>
 
 #include <QKeyEvent>
 #include <QPainter>
+
+#include <QPointer>
 
 namespace QtOsgBridge
 {
@@ -37,7 +38,6 @@ namespace QtOsgBridge
     : QOpenGLWidget(parent)
     , m_updateMode(UpdateMode::OnInputEvent)
     , m_isFirstFrame(true)
-    , m_overlayCompositor(new OverlayCompositor(this))
   {
     const auto w          = width();
     const auto h          = height();
@@ -57,8 +57,6 @@ namespace QtOsgBridge
     m_viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
     m_viewer->setReleaseContextAtEndOfFrameHint(false);
 
-    setupVirtualOverlayNodes();
-
     m_viewer->realize();
 
     setMouseTracking(true);
@@ -75,10 +73,7 @@ namespace QtOsgBridge
     setAutoFillBackground(false);
   }
 
-  QtOsgWidget::~QtOsgWidget()
-  {
-    m_overlayCompositor->clear();
-  }
+  QtOsgWidget::~QtOsgWidget() = default;
 
   void QtOsgWidget::setUpdateMode(UpdateMode mode)
   {
@@ -107,9 +102,12 @@ namespace QtOsgBridge
     return m_view;
   }
 
-  osg::ref_ptr<OverlayCompositor> QtOsgWidget::getOverlayCompositor() const
+  void QtOsgWidget::addOverlayWidget(const QPointer<QWidget> widget)
   {
-    return m_overlayCompositor;
+    widget->setAttribute(Qt::WA_TranslucentBackground);
+
+    widget->setParent(this);
+    widget->show();
   }
 
   void QtOsgWidget::initializeGL()
@@ -127,7 +125,6 @@ namespace QtOsgBridge
       m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
     }
 
-    // m_overlayCompositor->renderVirtualOverlays();
     m_viewer->frame();
 
     doneCurrent();
@@ -137,9 +134,6 @@ namespace QtOsgBridge
   {
     m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
     m_graphicsWindow->resized(x(), y(), width, height);
-
-    m_overlayProjection->setMatrix(
-            osg::Matrix::ortho2D(0.0, static_cast<double>(width) - 1.0, static_cast<double>(height) - 1.0, 0.0));
 
     m_view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
   }
@@ -262,17 +256,4 @@ namespace QtOsgBridge
     handlerFunc(m_graphicsWindow->getEventQueue());
   }
 
-  void QtOsgWidget::setupVirtualOverlayNodes()
-  {
-    m_overlayProjection = new osg::Projection();
-    m_overlayProjection->addChild(m_overlayCompositor);
-
-    auto stateSet = m_overlayProjection->getOrCreateStateSet();
-    stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    stateSet->setRenderBinDetails(10, "RenderBin");
-    stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
-    stateSet->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA), osg::StateAttribute::ON);
-
-    getView()->getCamera(osgHelper::View::CameraType::Screen)->addChild(m_overlayProjection);
-  }
 }

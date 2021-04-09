@@ -224,9 +224,11 @@ void QtGameApplication::onExitEventStateRequest(const osg::ref_ptr<AbstractEvent
     return;
   }
 
-  for (const auto& data : m_states)
+  auto it = m_states.begin();
+  while (it != m_states.end())
   {
-    exitState(data.state);
+    exitState(it->state);
+    it = m_states.begin();
   }
 }
 
