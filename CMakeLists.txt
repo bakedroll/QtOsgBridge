@@ -16,8 +16,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE "-fpermissive")
 source_group(GeneratedFiles FILES
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/moc_compilation.cpp)
 
-foreach(module ${QT5_MODULES})
-  target_include_directories(${PROJECT_NAME} PUBLIC ${Qt5${module}_INCLUDE_DIRS})
+foreach(module ${QT_MODULES})
+  target_include_directories(${PROJECT_NAME} PUBLIC ${Qt${QT_VERSION}${module}_INCLUDE_DIRS})
 endforeach()
 
 # set include directories
