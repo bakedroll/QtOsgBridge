@@ -25,6 +25,7 @@ namespace QtOsgBridge
 
   private Q_SLOTS:
     void onVirtualOverlayToggled(const QPointer<VirtualOverlay>& overlay, bool enabled);
+    void onVirtualOverlayVisibilityToggled(const QPointer<VirtualOverlay>& overlay, bool enabled);
     void onVirtualOverlayDestroyed(QObject* object);
 
   private:

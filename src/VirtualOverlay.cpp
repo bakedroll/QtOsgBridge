@@ -6,6 +6,7 @@
 #include <osgHelper/Helper.h>
 
 #include <QPointer>
+#include <QEvent>
 
 #include <cassert>
 
@@ -20,6 +21,7 @@ struct VirtualOverlay::Impl
     , texture(new osg::Texture2D())
     , material(new osg::Material())
     , bIsVirtual(false)
+    , bIsVirtualVisible(true)
   {
     texture->setDataVariance(osg::Object::DYNAMIC);
     texture->setImage(new osg::Image());
@@ -72,6 +74,7 @@ struct VirtualOverlay::Impl
   QImage  image;
 
   bool bIsVirtual;
+  bool bIsVirtualVisible;
 };
 
 VirtualOverlay::VirtualOverlay()
@@ -148,6 +151,18 @@ void VirtualOverlay::setVirtual(bool enabled)
 bool VirtualOverlay::isVirtual() const
 {
   return m->bIsVirtual;
+}
+
+void VirtualOverlay::setVirtualVisible(bool visible)
+{
+  m->bIsVirtualVisible = visible;
+
+  Q_EMIT toggledIsVirtualVisible(this, visible);
+}
+
+bool VirtualOverlay::isVirtualVisible() const
+{
+  return m->bIsVirtualVisible;
 }
 
 }

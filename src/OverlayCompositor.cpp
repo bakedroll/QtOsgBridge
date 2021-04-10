@@ -31,6 +31,8 @@ void OverlayCompositor::addVirtualOverlay(const QPointer<VirtualOverlay>& overla
   data.rootNode = overlay->getRootNode();
   data.connections.push_back(
           connect(overlay, &VirtualOverlay::toggledIsVirtual, this, &OverlayCompositor::onVirtualOverlayToggled));
+  data.connections.push_back(connect(overlay, &VirtualOverlay::toggledIsVirtualVisible, this,
+                                     &OverlayCompositor::onVirtualOverlayVisibilityToggled));
   data.connections.push_back(
           connect(overlay, &QObject::destroyed, this, &OverlayCompositor::onVirtualOverlayDestroyed));
 }
@@ -55,7 +57,7 @@ void OverlayCompositor::renderVirtualOverlays()
 {
   for (const auto& overlay : m_overlays)
   {
-    if (overlay.first->isVirtual())
+    if (overlay.first->isVirtual() && overlay.first->isVirtualVisible())
     {
       overlay.first->setVisible(true);
       overlay.first->renderToTexture();
@@ -67,8 +69,13 @@ void OverlayCompositor::renderVirtualOverlays()
 void OverlayCompositor::onVirtualOverlayToggled(const QPointer<VirtualOverlay>& overlay, bool enabled)
 {
   assert_return(m_overlays.count(overlay) > 0);
+  setChildValue(overlay->getRootNode(), enabled && overlay->isVirtualVisible());
+}
 
-  setChildValue(overlay->getRootNode(), enabled);
+void OverlayCompositor::onVirtualOverlayVisibilityToggled(const QPointer<VirtualOverlay>& overlay, bool enabled)
+{
+  assert_return(m_overlays.count(overlay) > 0);
+  setChildValue(overlay->getRootNode(), enabled && overlay->isVirtual());
 }
 
 void OverlayCompositor::onVirtualOverlayDestroyed(QObject* object)

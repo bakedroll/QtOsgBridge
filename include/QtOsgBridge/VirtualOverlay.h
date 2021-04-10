@@ -28,8 +28,12 @@ namespace QtOsgBridge
     void setVirtual(bool enabled);
     bool isVirtual() const;
 
+    void setVirtualVisible(bool visible);
+    bool isVirtualVisible() const;
+
   Q_SIGNALS:
     void toggledIsVirtual(const QPointer<VirtualOverlay>& overlay, bool enabled);
+    void toggledIsVirtualVisible(const QPointer<VirtualOverlay>& overlay, bool enabled);
 
   private:
     struct Impl;
