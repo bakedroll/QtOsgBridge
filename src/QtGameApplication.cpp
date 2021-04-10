@@ -1,5 +1,6 @@
 #include <QtOsgBridge/QtGameApplication.h>
 #include <QtOsgBridge/MainWindow.h>
+#include <QtOsgBridge/Helper.h>
 
 #include <osgHelper/Observable.h>
 #include <osgHelper/LogManager.h>

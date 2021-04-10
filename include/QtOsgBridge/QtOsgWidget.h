@@ -1,5 +1,8 @@
 #pragma once
 
+#include <QtOsgBridge/OverlayCompositor.h>
+#include <QtOsgBridge/VirtualOverlay.h>
+
 #include <osgHelper/View.h>
 
 #include <osgViewer/CompositeViewer>
@@ -31,7 +34,8 @@ public:
   osg::ref_ptr<osgHelper::View>            getView() const;
   osg::ref_ptr<osgViewer::CompositeViewer> getViewer() const;
 
-  void addOverlayWidget(const QPointer<QWidget> widget);
+  void addOverlayWidget(const QPointer<QWidget>& widget, bool visible = true);
+  void addVirtualOverlayWidget(const QPointer<VirtualOverlay>& overlay);
 
 protected:
   void initializeGL() override;
@@ -61,7 +65,11 @@ private:
 
   bool m_isFirstFrame;
 
+  osg::ref_ptr<OverlayCompositor> m_overlayCompositor;
+  osg::ref_ptr<osg::Projection>   m_overlayProjection;
+
   void handleEvent(const EventHandlerFunc& handlerFunc) const;
+  void setupVirtualOverlayNodes();
 
 };
 
