@@ -24,7 +24,7 @@ void OverlayCompositor::addVirtualOverlay(const QPointer<VirtualOverlay>& overla
     return;
   }
 
-  addChild(overlay->getRootNode(), overlay->isVirtual());
+  addChild(overlay->getRootNode(), overlay->isVirtual() && overlay->isVirtualVisible());
 
   auto& data = m_overlays[overlay];
 
@@ -60,6 +60,7 @@ void OverlayCompositor::renderVirtualOverlays()
     if (overlay.first->isVirtual() && overlay.first->isVirtualVisible())
     {
       overlay.first->setVisible(true);
+      overlay.first->renderToTexture();
       overlay.first->renderToTexture();
       overlay.first->setVisible(false);
     }
