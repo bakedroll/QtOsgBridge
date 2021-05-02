@@ -44,28 +44,6 @@ namespace QtOsgBridge
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 
-    const auto w          = width();
-    const auto h          = height();
-    const auto pixelRatio = qApp->devicePixelRatio();
-
-    m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(0, 0, w * pixelRatio, h * pixelRatio);
-
-    m_view = new osgHelper::View();
-    m_view->getCamera(osgHelper::View::CameraType::Scene)->setGraphicsContext(m_graphicsWindow);
-    m_view->getCamera(osgHelper::View::CameraType::Screen)->setGraphicsContext(m_graphicsWindow);
-    m_view->updateCameraViewports(0, 0, w, h, pixelRatio);
-
-    m_graphicsWindow->getEventQueue()->syncWindowRectangleWithGraphicsContext();
-
-    m_viewer = new osgViewer::CompositeViewer();
-    m_viewer->addView(m_view);
-    m_viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
-    m_viewer->setReleaseContextAtEndOfFrameHint(false);
-
-    setupVirtualOverlayNodes();
-
-    m_viewer->realize();
-
     connect(&m_updateTimer, &QTimer::timeout, this, QOverload<>::of(&QtOsgWidget::update));
 
     m_updateTimer.setSingleShot(false);
@@ -134,6 +112,31 @@ namespace QtOsgBridge
   void QtOsgWidget::initializeGL()
   {
     initializeOpenGLFunctions();
+    makeCurrent();
+
+    const auto w          = width();
+    const auto h          = height();
+    const auto pixelRatio = qApp->devicePixelRatio();
+
+    m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(0, 0, w * pixelRatio, h * pixelRatio);
+
+    m_view = new osgHelper::View();
+    m_view->getCamera(osgHelper::View::CameraType::Scene)->setGraphicsContext(m_graphicsWindow);
+    m_view->getCamera(osgHelper::View::CameraType::Screen)->setGraphicsContext(m_graphicsWindow);
+    m_view->updateCameraViewports(0, 0, w, h, pixelRatio);
+
+    m_graphicsWindow->getEventQueue()->syncWindowRectangleWithGraphicsContext();
+
+    m_viewer = new osgViewer::CompositeViewer();
+    m_viewer->addView(m_view);
+    m_viewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+    m_viewer->setReleaseContextAtEndOfFrameHint(false);
+
+    setupVirtualOverlayNodes();
+
+    m_viewer->realize();
+
+    doneCurrent();
   }
 
   void QtOsgWidget::paintGL()
@@ -154,6 +157,8 @@ namespace QtOsgBridge
 
   void QtOsgWidget::resizeGL(int width, int height)
   {
+    makeCurrent();
+
     m_graphicsWindow->getEventQueue()->windowResize(x(), y(), width, height);
     m_graphicsWindow->resized(x(), y(), width, height);
 
@@ -162,6 +167,8 @@ namespace QtOsgBridge
 
 
     m_view->updateResolution(osg::Vec2f(width, height), qApp->devicePixelRatio());
+
+    doneCurrent();
   }
 
   void QtOsgWidget::paintEvent(QPaintEvent* paintEvent)
