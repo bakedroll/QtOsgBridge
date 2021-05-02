@@ -6,6 +6,7 @@
 #include <QPainter>
 
 #include <QPointer>
+#include <QApplication>
 
 namespace QtOsgBridge
 {
@@ -45,7 +46,7 @@ namespace QtOsgBridge
 
     const auto w          = width();
     const auto h          = height();
-    const auto pixelRatio = devicePixelRatio();
+    const auto pixelRatio = qApp->devicePixelRatio();
 
     m_graphicsWindow = new osgViewer::GraphicsWindowEmbedded(0, 0, w * pixelRatio, h * pixelRatio);
 
@@ -160,7 +161,7 @@ namespace QtOsgBridge
             osg::Matrix::ortho2D(0.0, static_cast<double>(width), static_cast<double>(height), 0.0));
 
 
-    m_view->updateResolution(osg::Vec2f(width, height), devicePixelRatio());
+    m_view->updateResolution(osg::Vec2f(width, height), qApp->devicePixelRatio());
   }
 
   void QtOsgWidget::paintEvent(QPaintEvent* paintEvent)
@@ -198,7 +199,7 @@ namespace QtOsgBridge
   {
     QOpenGLWidget::mouseMoveEvent(event);
 
-    const auto pixelRatio = devicePixelRatio();
+    const auto pixelRatio = qApp->devicePixelRatio();
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
@@ -211,7 +212,7 @@ namespace QtOsgBridge
   {
     QOpenGLWidget::mousePressEvent(event);
 
-    const auto pixelRatio = devicePixelRatio();
+    const auto pixelRatio = qApp->devicePixelRatio();
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
@@ -224,7 +225,7 @@ namespace QtOsgBridge
   {
     QOpenGLWidget::mouseReleaseEvent(event);
 
-    const auto pixelRatio = devicePixelRatio();
+    const auto pixelRatio = qApp->devicePixelRatio();
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
