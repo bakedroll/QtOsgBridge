@@ -133,7 +133,6 @@ namespace QtOsgBridge
     m_viewer->setReleaseContextAtEndOfFrameHint(false);
 
     setupVirtualOverlayNodes();
-
     m_viewer->realize();
 
     doneCurrent();
@@ -150,6 +149,7 @@ namespace QtOsgBridge
     }
 
     m_overlayCompositor->renderVirtualOverlays();
+
     m_viewer->frame();
 
     doneCurrent();
@@ -167,6 +167,8 @@ namespace QtOsgBridge
 
 
     m_view->updateResolution(osg::Vec2f(width, height), qApp->devicePixelRatio());
+
+    m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
 
     doneCurrent();
   }
