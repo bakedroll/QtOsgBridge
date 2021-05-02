@@ -61,7 +61,6 @@ void OverlayCompositor::renderVirtualOverlays()
     {
       overlay.first->setVisible(true);
       overlay.first->renderToTexture();
-      overlay.first->renderToTexture();
       overlay.first->setVisible(false);
     }
   }
