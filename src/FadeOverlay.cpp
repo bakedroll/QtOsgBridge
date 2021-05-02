@@ -18,6 +18,11 @@ FadeOverlay::FadeOverlay(float duration, bool isFadedOutInitially)
 
 FadeOverlay::~FadeOverlay() = default;
 
+FadeOverlay::FadeMode FadeOverlay::getCurrentFadeMode() const
+{
+  return ((m_state == State::FadingIn) || (m_state == State::Visible)) ? FadeMode::In : FadeMode::Out;
+}
+
 void FadeOverlay::fadeTo(FadeMode mode, double time)
 {
   const auto isFadingIn  = ((m_state == State::FadingIn) || (m_state == State::Visible));

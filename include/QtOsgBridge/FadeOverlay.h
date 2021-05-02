@@ -19,6 +19,8 @@ public:
   FadeOverlay(float duration = 0.5f, bool isFadedOutInitially = false);
   ~FadeOverlay() override;
 
+  FadeMode getCurrentFadeMode() const;
+
   void fadeTo(FadeMode mode, double time);
   void jumpTo(FadeMode mode);
 
