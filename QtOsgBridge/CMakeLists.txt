@@ -1,36 +1,15 @@
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
+begin_project(QtOsgBridge LIBRARY)
 
-set(PROJECT_NAME QtOsgBridge)
+enable_automoc()
 
-add_source_directory(QTOSGBRIDGE_SOURCE src)
-add_source_directory(QTOSGBRIDGE_SOURCE include/QtOsgBridge)
+require_library(Qt6 MODULES Core Gui Widgets OpenGL OpenGLWidgets)
+require_library(OpenSceneGraph)
+require_library(osgPPU)
 
-set(QTOSGBRIDGE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+require_project(osgHelper PATH osgHelper)
+add_required_project(osgHelperTest PATH osgHelper)
 
-add_library(${PROJECT_NAME} ${QTOSGBRIDGE_SOURCE})
+add_source_directory(src)
+add_source_directory(include)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
-target_compile_options(${PROJECT_NAME} PRIVATE "-fpermissive")
-
-source_group(GeneratedFiles FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/moc_compilation.cpp)
-
-foreach(module ${QT_MODULES})
-  target_include_directories(${PROJECT_NAME} PUBLIC ${Qt${QT_VERSION}${module}_INCLUDE_DIRS})
-endforeach()
-
-# set include directories
-target_include_directories(${PROJECT_NAME} PUBLIC
-  ${QTOSGBRIDGE_INCLUDE_DIR}
-  ${OSG_INCLUDE_DIR}
-  ${OSGPPU_INCLUDE_DIR}
-  ${OSGHELPER_INCLUDE_DIR})
-
-target_link_libraries(${PROJECT_NAME} osgHelper)
-  
-# make variable globally accessable
-set(QTOSGBRIDGE_INCLUDE_DIR ${QTOSGBRIDGE_INCLUDE_DIR} PARENT_SCOPE)
-
-set(CMAKE_INCLUDE_CURRENT_DIR OFF)
-set(CMAKE_AUTOMOC OFF)
+add_include_directory(include)

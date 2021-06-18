@@ -4,6 +4,8 @@
 
 class QtOsgBridgeApplication : public QtOsgBridge::QtGameApplication
 {
+  Q_OBJECT
+
 public:
   QtOsgBridgeApplication(int& argc, char** argv);
 
