@@ -22,12 +22,12 @@ namespace QtOsgBridge
     ~QtGameApplication();
 
     template <typename TState>
-    int runGame()
+    int runGame(osgHelper::ioc::Injector::Mode injectorMode = osgHelper::ioc::Injector::Mode::OnlyRegisteredClasses)
     {
       auto& c = container();
 
       registerComponents(c);
-      osgHelper::ioc::Injector injector(c);
+      osgHelper::ioc::Injector injector(c, injectorMode);
       m_injector = &injector;
 
       initialize(*m_injector);
