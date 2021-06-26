@@ -24,6 +24,9 @@ protected:
                           const osg::Vec2f& change);
   virtual void onDragEnd(Qt::MouseButton button, const osg::Vec2f& origin, const osg::Vec2f& position);
 
+  bool isKeyDown(Qt::Key key) const;
+  bool isMouseButtonDown(Qt::MouseButton button) const;
+
 private:
   struct DragState
   {
@@ -33,6 +36,9 @@ private:
   };
 
   std::map<Qt::MouseButton, DragState> m_dragStates;
+
+  std::map<Qt::MouseButton, bool> m_isMouseDown;
+  std::map<Qt::Key, bool>         m_isKeyDown;
 
 };
 

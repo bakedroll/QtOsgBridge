@@ -13,6 +13,14 @@ EventProcessingState::EventProcessingState(osgHelper::ioc::Injector& injector)
 
 bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
 {
+  if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease)
+  {
+    const auto mouseEvent = dynamic_cast<QMouseEvent*>(event);
+    assert_return(mouseEvent, false);
+
+    m_isMouseDown[static_cast<Qt::MouseButton>(mouseEvent->button())] = (event->type() == QEvent::Type::MouseButtonPress);
+  }
+
   switch (event->type())
   {
   case QEvent::Type::KeyPress:
@@ -21,11 +29,13 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
     const auto keyEvent = dynamic_cast<QKeyEvent*>(event);
     assert_return(keyEvent, false);
 
+    m_isKeyDown[static_cast<Qt::Key>(keyEvent->key())] = (event->type() == QEvent::Type::KeyPress);
+
     return onKeyEvent(keyEvent);
   }
-  case QEvent::Type::MouseButtonDblClick:
   case QEvent::Type::MouseButtonPress:
   case QEvent::Type::MouseButtonRelease:
+  case QEvent::Type::MouseButtonDblClick:
   case QEvent::Type::MouseMove:
   {
     const auto mouseEvent = dynamic_cast<QMouseEvent*>(event);
@@ -35,7 +45,7 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
     {
     case QEvent::Type::MouseButtonPress:
     {
-      const osg::Vec2f origin(static_cast<float>(mouseEvent->x()), static_cast<float>(mouseEvent->y()));
+      const osg::Vec2f origin(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
       m_dragStates[mouseEvent->button()] = DragState{false, origin, origin};
 
       break;
@@ -55,7 +65,7 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
           state.second.moved = true;
         }
 
-        const osg::Vec2f pos(static_cast<float>(mouseEvent->x()), static_cast<float>(mouseEvent->y()));
+        const osg::Vec2f pos(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
 
         onDragMove(state.first, state.second.origin, pos, state.second.lastPos - pos);
 
@@ -71,7 +81,7 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
       if (m_dragStates.count(button) > 0)
       {
         onDragEnd(button, m_dragStates[button].origin,
-                  osg::Vec2f(static_cast<float>(mouseEvent->x()), static_cast<float>(mouseEvent->y())));
+                  osg::Vec2f(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y())));
 
         m_dragStates.erase(m_dragStates.find(button));
       }
@@ -124,6 +134,26 @@ void EventProcessingState::onDragMove(Qt::MouseButton button, const osg::Vec2f& 
 
 void EventProcessingState::onDragEnd(Qt::MouseButton button, const osg::Vec2f& origin, const osg::Vec2f& position)
 {
+}
+
+bool EventProcessingState::isKeyDown(Qt::Key key) const
+{
+  if (m_isKeyDown.count(key) == 0)
+  {
+    return false;
+  }
+
+  return m_isKeyDown.find(key)->second;
+}
+
+bool EventProcessingState::isMouseButtonDown(Qt::MouseButton button) const
+{
+  if (m_isMouseDown.count(button) == 0)
+  {
+    return false;
+  }
+
+  return m_isMouseDown.find(button)->second;
 }
 
 }  // namespace QtOsgBridge
