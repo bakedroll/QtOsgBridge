@@ -22,15 +22,9 @@ namespace QtOsgBridge
     ~QtGameApplication();
 
     template <typename TState>
-    int runGame(osgHelper::ioc::Injector::Mode injectorMode = osgHelper::ioc::Injector::Mode::OnlyRegisteredClasses)
+    int runGame()
     {
-      auto& c = container();
-
-      registerComponents(c);
-      osgHelper::ioc::Injector injector(c, injectorMode);
-      m_injector = &injector;
-
-      initialize(*m_injector);
+      setupIOC(osgHelper::ioc::Injector::Mode::OnlyRegisteredClasses);
 
       if (!injectPushAndPrepareState<TState>())
       {
@@ -62,15 +56,13 @@ namespace QtOsgBridge
     struct Impl;
     std::unique_ptr<Impl> m;
 
-    osgHelper::ioc::Injector* m_injector;
-
     StateList                        m_states;
     osg::ref_ptr<GameUpdateCallback> m_updateCallback;
 
     template <typename TState>
     bool injectPushAndPrepareState()
     {
-      auto state = m_injector->inject<TState>();
+      auto state = injector().inject<TState>();
       assert_return(state.valid(), false);
 
       pushAndPrepareState(state);

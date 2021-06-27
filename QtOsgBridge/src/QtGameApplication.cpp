@@ -72,7 +72,6 @@ QtGameApplication::QtGameApplication(int& argc, char** argv)
   : Multithreading(argc, argv)
   , GameApplication()
   , m(new Impl())
-  , m_injector(nullptr)
 {
   osgHelper::LogManager::getInstance()->addLogger(new osgHelper::StdOutLogger());
   osgHelper::LogManager::getInstance()->addLogger(new FileLogger("./Logs"));
