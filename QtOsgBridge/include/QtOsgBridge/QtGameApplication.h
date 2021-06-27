@@ -1,10 +1,10 @@
 #pragma once
 
 #include <QtOsgBridge/Multithreading.h>
-#include <QtOsgBridge/GameApplication.h>
 #include <QtOsgBridge/AbstractEventState.h>
 #include <QtOsgBridge/GameUpdateCallback.h>
 
+#include <osgHelper/GameApplication.h>
 #include <osgHelper/SimulationCallback.h>
 
 #include <memory>
@@ -13,7 +13,7 @@
 
 namespace QtOsgBridge
 {
-  class QtGameApplication : public Multithreading, public GameApplication
+  class QtGameApplication : public Multithreading, public osgHelper::GameApplication
   {
     Q_OBJECT
 

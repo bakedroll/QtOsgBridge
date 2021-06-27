@@ -6,7 +6,7 @@
 
 #include <QDir>
 
-namespace onep
+namespace QtOsgBridge
 {
   void make_minidump(EXCEPTION_POINTERS* e)
   {

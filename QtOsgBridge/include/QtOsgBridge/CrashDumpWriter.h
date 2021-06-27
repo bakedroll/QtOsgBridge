@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-namespace onep
+namespace QtOsgBridge
 {
   LONG CALLBACK unhandled_handler(EXCEPTION_POINTERS* e);
 }
