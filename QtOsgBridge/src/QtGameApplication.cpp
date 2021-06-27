@@ -82,7 +82,17 @@ QtGameApplication::QtGameApplication(int& argc, char** argv)
   m->mainWindow->show();
 }
 
-QtGameApplication::~QtGameApplication() = default;
+QtGameApplication::~QtGameApplication()
+{
+  OSGH_LOG_INFO("Application shutting down");
+
+  if (m->mainWindow->isVisible())
+  {
+    m->mainWindow->close();
+  }
+
+  m->mainWindow->deleteLater();
+}
 
 bool QtGameApplication::notify(QObject* receiver, QEvent* event)
 {
@@ -118,14 +128,8 @@ int QtGameApplication::runGame()
       state.state->onExit();
     }
 
-    deinitialize();
-
     m_states.clear();
     view->cleanUp();
-
-    container().clear();
-
-    osgHelper::LogManager::clearInstance();
 
     return ret;
   });
@@ -145,18 +149,6 @@ void QtGameApplication::prepareEventState(StateData& data)
 
   data.state->onInitialize(m->mainWindow, m->simData);
   m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
-}
-
-void QtGameApplication::deinitialize()
-{
-  OSGH_LOG_INFO("Application shutting down");
-
-  if (m->mainWindow->isVisible())
-  {
-    m->mainWindow->close();
-  }
-
-  m->mainWindow->deleteLater();
 }
 
 void QtGameApplication::onException(const std::string& message)

@@ -46,8 +46,6 @@ namespace QtOsgBridge
     int runGame();
 
     void prepareEventState(StateData& data);
-    void deinitialize() override;
-
     void onException(const std::string& message) override;
 
   private:
