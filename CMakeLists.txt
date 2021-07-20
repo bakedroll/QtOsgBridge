@@ -17,5 +17,5 @@ make_projects()
 
 if (MSVC)
   osg_copy_additional_binaries(zlib)
-  qt6_copy_plugins(platforms/qwindows styles/qwindowsvistastyle)
+  qt_copy_plugins(platforms/qwindows styles/qwindowsvistastyle)
 endif()
