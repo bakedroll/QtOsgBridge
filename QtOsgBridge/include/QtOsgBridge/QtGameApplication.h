@@ -24,7 +24,7 @@ namespace QtOsgBridge
     template <typename TState>
     int runGame()
     {
-      setupIOC(osgHelper::ioc::Injector::Mode::OnlyRegisteredClasses);
+      setupIOC();
 
       if (!injectPushAndPrepareState<TState>())
       {
