@@ -11,8 +11,6 @@
 #include <QMessageBox>
 #include <QPointer>
 
-#include <cassert>
-
 namespace QtOsgBridge
 {
 
