@@ -7,6 +7,7 @@ namespace QtOsgBridge
 
 EventProcessingState::EventProcessingState(osgHelper::ioc::Injector& injector)
   : AbstractEventState(injector)
+  , m_isMouseCaptured(false)
 {
 
 }
@@ -67,7 +68,15 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
 
         const osg::Vec2f pos(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
 
-        onDragMove(state.first, state.second.origin, pos, state.second.lastPos - pos);
+        if (m_isMouseCaptured)
+        {
+          const auto delta = m_capturedMousePos - mouseEvent->globalPosition();
+          onDragMove(state.first, state.second.origin, pos, osg::Vec2f(static_cast<int>(delta.x()), static_cast<int>(delta.y())));
+        }
+        else
+        {
+          onDragMove(state.first, state.second.origin, pos, state.second.lastPos - pos);
+        }
 
         state.second.lastPos = pos;
       }
@@ -90,6 +99,11 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
     }
     default:
       break;
+    }
+
+    if (event->type() == QEvent::Type::MouseMove && m_isMouseCaptured)
+    {
+      QCursor::setPos(m_capturedMousePos);
     }
 
     return onMouseEvent(mouseEvent);
@@ -154,6 +168,17 @@ bool EventProcessingState::isMouseButtonDown(Qt::MouseButton button) const
   }
 
   return m_isMouseDown.find(button)->second;
+}
+
+void EventProcessingState::setCaptureMouse(bool on)
+{
+  if (m_isMouseCaptured == on)
+  {
+    return;
+  }
+
+  m_isMouseCaptured  = on;
+  m_capturedMousePos = QCursor::pos();
 }
 
 }  // namespace QtOsgBridge

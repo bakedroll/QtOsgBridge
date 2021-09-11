@@ -27,6 +27,8 @@ protected:
   bool isKeyDown(Qt::Key key) const;
   bool isMouseButtonDown(Qt::MouseButton button) const;
 
+  void setCaptureMouse(bool on);
+
 private:
   struct DragState
   {
@@ -39,6 +41,9 @@ private:
 
   std::map<Qt::MouseButton, bool> m_isMouseDown;
   std::map<Qt::Key, bool>         m_isKeyDown;
+
+  bool   m_isMouseCaptured;
+  QPoint m_capturedMousePos;
 
 };
 
