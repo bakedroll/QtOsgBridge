@@ -2,7 +2,7 @@
 
 #include <QtOsgBridge/AbstractEventState.h>
 
-#include <QPointer>
+#include <optional>
 
 namespace QtOsgBridge
 {
@@ -26,18 +26,20 @@ protected:
 
   bool isKeyDown(Qt::Key key) const;
   bool isMouseButtonDown(Qt::MouseButton button) const;
+  bool isMouseDragging(const std::optional<Qt::MouseButton>& button = std::nullopt) const;
 
   void setCaptureMouse(bool on);
 
 private:
-  struct DragState
+  struct MouseDragData
   {
-    bool       moved;
-    osg::Vec2f origin;
-    osg::Vec2f lastPos;
+    Qt::MouseButton button;
+    bool            moved;
+    osg::Vec2f      origin;
+    osg::Vec2f      lastPos;
   };
 
-  std::map<Qt::MouseButton, DragState> m_dragStates;
+  std::optional<MouseDragData> m_mouseDragData;
 
   std::map<Qt::MouseButton, bool> m_isMouseDown;
   std::map<Qt::Key, bool>         m_isKeyDown;

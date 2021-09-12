@@ -46,53 +46,53 @@ bool EventProcessingState::eventFilter(QObject* object, QEvent* event)
     {
     case QEvent::Type::MouseButtonPress:
     {
-      const osg::Vec2f origin(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
-      m_dragStates[mouseEvent->button()] = DragState{false, origin, origin};
+      if (!m_mouseDragData)
+      {
+        const osg::Vec2f origin(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
+        m_mouseDragData = MouseDragData{ mouseEvent->button(), false, origin, origin };
+      }
 
       break;
     }
     case QEvent::Type::MouseMove:
     {
-      if (m_dragStates.empty())
+      if (!m_mouseDragData)
       {
         break;
       }
 
-      for (auto& state : m_dragStates)
+      if (!m_mouseDragData->moved)
       {
-        if (!state.second.moved)
-        {
-          onDragBegin(state.first, state.second.origin);
-          state.second.moved = true;
-        }
-
-        const osg::Vec2f pos(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
-
-        if (m_isMouseCaptured)
-        {
-          const auto delta = m_capturedMousePos - mouseEvent->globalPosition();
-          onDragMove(state.first, state.second.origin, pos, osg::Vec2f(static_cast<int>(delta.x()), static_cast<int>(delta.y())));
-        }
-        else
-        {
-          onDragMove(state.first, state.second.origin, pos, state.second.lastPos - pos);
-        }
-
-        state.second.lastPos = pos;
+        onDragBegin(m_mouseDragData->button, m_mouseDragData->origin);
+        m_mouseDragData->moved = true;
       }
+
+      const osg::Vec2f pos(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
+
+      if (m_isMouseCaptured)
+      {
+        const auto delta = m_capturedMousePos - mouseEvent->globalPosition();
+        onDragMove(m_mouseDragData->button, m_mouseDragData->origin,
+                   pos, osg::Vec2f(static_cast<int>(delta.x()), static_cast<int>(delta.y())));
+      }
+      else
+      {
+        onDragMove(m_mouseDragData->button, m_mouseDragData->origin,
+                   pos, m_mouseDragData->lastPos - pos);
+      }
+
+      m_mouseDragData->lastPos = pos;
 
       break;
     }
     case QEvent::Type::MouseButtonRelease:
     {
-      const auto button = mouseEvent->button();
-
-      if (m_dragStates.count(button) > 0)
+      if (m_mouseDragData && (m_mouseDragData->button == mouseEvent->button()))
       {
-        onDragEnd(button, m_dragStates[button].origin,
+        onDragEnd(m_mouseDragData->button, m_mouseDragData->origin,
                   osg::Vec2f(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y())));
 
-        m_dragStates.erase(m_dragStates.find(button));
+        m_mouseDragData.reset();
       }
 
       break;
@@ -168,6 +168,11 @@ bool EventProcessingState::isMouseButtonDown(Qt::MouseButton button) const
   }
 
   return m_isMouseDown.find(button)->second;
+}
+
+bool EventProcessingState::isMouseDragging(const std::optional<Qt::MouseButton>& button) const
+{
+  return m_mouseDragData && (!button || (*button == m_mouseDragData->button));
 }
 
 void EventProcessingState::setCaptureMouse(bool on)
