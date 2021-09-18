@@ -172,7 +172,7 @@ bool EventProcessingState::isMouseButtonDown(Qt::MouseButton button) const
 
 bool EventProcessingState::isMouseDragging(const std::optional<Qt::MouseButton>& button) const
 {
-  return m_mouseDragData && (!button || (*button == m_mouseDragData->button));
+  return m_mouseDragData && m_mouseDragData->moved && (!button || (*button == m_mouseDragData->button));
 }
 
 void EventProcessingState::setCaptureMouse(bool on)
