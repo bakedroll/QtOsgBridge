@@ -1,11 +1,15 @@
 #pragma once
 
-#include <QtOsgBridge/Multithreading.h>
 #include <QtOsgBridge/AbstractEventState.h>
 #include <QtOsgBridge/GameUpdateCallback.h>
 
+#include <osgHelper/ioc/PointerTypeDefinition.h>
+
+#include <QtUtilsLib/QtUtilsApplication.h>
+
 #include <osgHelper/GameApplication.h>
 #include <osgHelper/SimulationCallback.h>
+#include <osgHelper/ioc/InjectionContainer.h>
 
 #include <memory>
 
@@ -13,7 +17,8 @@
 
 namespace QtOsgBridge
 {
-  class QtGameApplication : public Multithreading, public osgHelper::GameApplication
+  class QtGameApplication : public QtUtilsLib::QtUtilsApplication<osg::ref_ptr<osg::Referenced>>,
+                            public osgHelper::GameApplication
   {
     Q_OBJECT
 
@@ -47,6 +52,8 @@ namespace QtOsgBridge
 
     void prepareEventState(StateData& data);
     void onException(const std::string& message) override;
+
+    static void registerEssentialComponents(osgHelper::ioc::InjectionContainer& container);
 
   private:
     using StateList = std::vector<StateData>;

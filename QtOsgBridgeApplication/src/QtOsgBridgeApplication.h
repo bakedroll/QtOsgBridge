@@ -2,6 +2,8 @@
 
 #include <QtOsgBridge/QtGameApplication.h>
 
+#include <osgHelper/ioc/InjectionContainer.h>
+
 class QtOsgBridgeApplication : public QtOsgBridge::QtGameApplication
 {
   Q_OBJECT

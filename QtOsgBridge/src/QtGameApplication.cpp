@@ -3,56 +3,20 @@
 #include <QtOsgBridge/Helper.h>
 
 #include <osgHelper/Observable.h>
-#include <osgHelper/LogManager.h>
+#include <osgHelper/TextureFactory.h>
+#include <osgHelper/ShaderFactory.h>
+#include <osgHelper/ResourceManager.h>
+
+#include <utilsLib/StdOutLoggingStrategy.h>
+#include <utilsLib/FileLoggingStrategy.h>
+#include <utilsLib/Utils.h>
 
 #include <QDir>
-#include <QDateTime>
-#include <QTextStream>
 #include <QMessageBox>
 #include <QPointer>
 
 namespace QtOsgBridge
 {
-
-class FileLogger : public osgHelper::Logger
-{
-public:
-  FileLogger(const QString& directory)
-  {
-    const QDir dir(directory);
-    if (!dir.exists())
-    {
-      dir.mkpath(".");
-    }
-
-    const auto filename =
-            dir.filePath(QString("%1.txt").arg(QDateTime::currentDateTime().toString("yy-MM-dd_HH.mm.ss")));
-
-    m_file.setFileName(filename);
-    m_file.open(QIODevice::WriteOnly);
-
-    m_textStream.setDevice(&m_file);
-  }
-
-  ~FileLogger()
-  {
-    if (m_file.isOpen())
-      m_file.close();
-  }
-
-  void log(const std::string& text) override
-  {
-    if (m_file.isOpen())
-    {
-      m_textStream << QString::fromStdString(text) << "\n";
-      m_textStream.flush();
-    }
-  }
-
-private:
-  QFile m_file;
-  QTextStream m_textStream;
-};
 
 struct QtGameApplication::Impl
 {
@@ -67,12 +31,14 @@ struct QtGameApplication::Impl
 };
 
 QtGameApplication::QtGameApplication(int& argc, char** argv)
-  : Multithreading(argc, argv)
+  : QtUtilsApplication<osg::ref_ptr<osg::Referenced>>(argc, argv)
   , GameApplication()
   , m(new Impl())
 {
-  osgHelper::LogManager::getInstance()->addLogger(new osgHelper::StdOutLogger());
-  osgHelper::LogManager::getInstance()->addLogger(new FileLogger("./Logs"));
+  utilsLib::ILoggingManager::getLogger()->addLoggingStrategy(
+    std::make_shared<utilsLib::StdOutLoggingStrategy>());
+  utilsLib::ILoggingManager::getLogger()->addLoggingStrategy(
+    std::make_shared<utilsLib::FileLoggingStrategy>("./Logs"));
 
   setlocale(LC_NUMERIC, "en_US");
 
@@ -82,7 +48,7 @@ QtGameApplication::QtGameApplication(int& argc, char** argv)
 
 QtGameApplication::~QtGameApplication()
 {
-  OSGH_LOG_INFO("Application shutting down");
+  UTILS_LOG_INFO("Application shutting down");
 
   if (m->mainWindow->isVisible())
   {
@@ -94,7 +60,7 @@ QtGameApplication::~QtGameApplication()
 
 bool QtGameApplication::notify(QObject* receiver, QEvent* event)
 {
-  if (safeExecute([&]() { Multithreading::notify(receiver, event); return 0; }))
+  if (safeExecute([&]() { MultithreadedApplication::notify(receiver, event); return 0; }))
   {
       return true;
   }
@@ -108,7 +74,7 @@ int QtGameApplication::runGame()
   {
     if (m_states.size() != 1)
     {
-      OSGH_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
+      UTILS_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
       return -1;
     }
 
@@ -117,7 +83,7 @@ int QtGameApplication::runGame()
     auto view = m->mainWindow->getViewWidget()->getView();
     view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
-    OSGH_LOG_INFO("Starting mainloop");
+    UTILS_LOG_INFO("Starting mainloop");
     const auto ret = exec();
 
     // shutdown/free all pointers
@@ -155,13 +121,20 @@ void QtGameApplication::onException(const std::string& message)
   quit();
 }
 
+void QtGameApplication::registerEssentialComponents(osgHelper::ioc::InjectionContainer& container)
+{
+  container.registerSingletonInterfaceType<osgHelper::IShaderFactory, osgHelper::ShaderFactory>();
+  container.registerSingletonInterfaceType<osgHelper::IResourceManager, osgHelper::ResourceManager>();
+  container.registerSingletonInterfaceType<osgHelper::ITextureFactory, osgHelper::TextureFactory>();
+}
+
 void QtGameApplication::updateStates(const osgHelper::SimulationCallback::SimulationData& data)
 {
   m->simData = data;
 
   if (m_states.empty() && m->mainWindow->isVisible())
   {
-    OSGH_LOG_DEBUG("Empty state list. Closing mainwindow");
+    UTILS_LOG_DEBUG("Empty state list. Closing mainwindow");
     m->mainWindow->close();
   }
 
@@ -194,7 +167,7 @@ void QtGameApplication::exitState(const osg::ref_ptr<AbstractEventState>& state)
     }
   }
 
-  OSGH_LOG_FATAL("Attempting to exit unknown state");
+  UTILS_LOG_FATAL("Attempting to exit unknown state");
 }
 
 void QtGameApplication::onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,

@@ -1,10 +1,12 @@
 #pragma once
 
 #include <QtOsgBridge/MainWindow.h>
-#include <QtOsgBridge/Multithreading.h>
+
+#include <utilsLib/Utils.h>
+
+#include <QtUtilsLib/MultithreadedApplication.h>
 
 #include <osgHelper/ioc/Injector.h>
-#include <osgHelper/Macros.h>
 #include <osgHelper/SimulationCallback.h>
 
 namespace QtOsgBridge
@@ -42,7 +44,7 @@ public:
   template <typename TState>
   void requestNewEventState(NewEventStateMode mode = NewEventStateMode::ContinueCurrent)
   {
-    Multithreading::executeInUiAsync([this, mode]()
+    QtUtilsLib::MultithreadedApplication::executeInUiAsync([this, mode]()
     {
       const auto state = m_injector->inject<TState>();
       assert_return(state.valid());

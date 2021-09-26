@@ -37,12 +37,12 @@ State1::State1(osgHelper::ioc::Injector& injector)
 
 State1::~State1()
 {
-  OSGH_LOG_DEBUG("~destruct State1");
+  UTILS_LOG_DEBUG("~destruct State1");
 }
 
 void State1::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const SimulationData& data)
 {
-  OSGH_LOG_DEBUG("onInitialize() State1");
+  UTILS_LOG_DEBUG("onInitialize() State1");
 
   const auto b1 = new QPushButton("State 2");
   const auto b2 = new QPushButton("State 2 Exit");
@@ -79,7 +79,7 @@ void State1::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const Si
 
 void State1::onExit()
 {
-  OSGH_LOG_DEBUG("onExit() State1");
+  UTILS_LOG_DEBUG("onExit() State1");
 
   QtOsgBridge::Helper::deleteWidget(m_overlay);
 }
@@ -91,12 +91,12 @@ State2::State2(osgHelper::ioc::Injector& injector)
 
 State2::~State2()
 {
-  OSGH_LOG_DEBUG("~destruct State2");
+  UTILS_LOG_DEBUG("~destruct State2");
 }
 
 void State2::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const SimulationData& data)
 {
-  OSGH_LOG_DEBUG("onInitialize() State2");
+  UTILS_LOG_DEBUG("onInitialize() State2");
 
   const auto b1 = new QPushButton("State 1");
   const auto b2 = new QPushButton("State 1 Exit");
@@ -133,7 +133,7 @@ void State2::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const Si
 
 void State2::onExit()
 {
-  OSGH_LOG_DEBUG("onExit() State2");
+  UTILS_LOG_DEBUG("onExit() State2");
 
   QtOsgBridge::Helper::deleteWidget(m_overlay);
 }
@@ -151,12 +151,12 @@ InitialState::InitialState(osgHelper::ioc::Injector& injector)
 
 InitialState::~InitialState()
 {
-  OSGH_LOG_DEBUG("~destruct InitialState");
+  UTILS_LOG_DEBUG("~destruct InitialState");
 }
 
 void InitialState::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const SimulationData& data)
 {
-  OSGH_LOG_DEBUG("onInitialize() InitialState");
+  UTILS_LOG_DEBUG("onInitialize() InitialState");
 
   auto geodeBox = new osg::Geode();
   geodeBox->addDrawable(new osg::ShapeDrawable(new osg::Box()));
@@ -255,7 +255,7 @@ void InitialState::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, co
   auto label = new QLabel("Virtual Overlay");
   label->setStyleSheet("color: #aaf; font-size:36pt;");
 
-  QGridLayout* vLayout = new QGridLayout();
+  auto vLayout = new QGridLayout();
   vLayout->addWidget(label, 0, 0);
   vLayout->addWidget(new QPushButton("Testbutton"), 1, 0);
 
@@ -267,7 +267,7 @@ void InitialState::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, co
   {
     const auto isVirtual = !m_virtualOverlay->isVirtual();
 
-    OSGH_LOG_DEBUG(std::string("Toggled virtual Overlay: ") + (isVirtual ? "on" : "off"));
+    UTILS_LOG_DEBUG(std::string("Toggled virtual Overlay: ") + (isVirtual ? "on" : "off"));
     m_virtualOverlay->setVirtual(isVirtual);
   });
 
@@ -285,7 +285,7 @@ void InitialState::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, co
 
 void InitialState::onExit()
 {
-  OSGH_LOG_DEBUG("onExit() InitialState");
+  UTILS_LOG_DEBUG("onExit() InitialState");
 
   if (m_overlay)
   {

@@ -9,7 +9,7 @@ QtOsgBridgeApplication::QtOsgBridgeApplication(int& argc, char** argv)
 
 void QtOsgBridgeApplication::registerComponents(osgHelper::ioc::InjectionContainer& container)
 {
-  registerEssentialComponents();
+  registerEssentialComponents(container);
 
   container.registerType<LoadingInitialState>();
   container.registerType<InitialState>();

@@ -1,5 +1,7 @@
 #include <QtOsgBridge/AbstractEventState.h>
 
+#include <QtUtilsLib/MultithreadedApplication.h>
+
 #include <QPointer>
 #include <QResizeEvent>
 
@@ -40,7 +42,7 @@ bool AbstractEventState::eventFilter(QObject* object, QEvent* event)
 
 void AbstractEventState::requestExitEventState(ExitEventStateMode mode)
 {
-  Multithreading::executeInUiAsync([this, mode]()
+  QtUtilsLib::MultithreadedApplication::executeInUiAsync([this, mode]()
   {
     Q_EMIT forwardExitEventStateRequest(this, mode);
   });
@@ -48,7 +50,7 @@ void AbstractEventState::requestExitEventState(ExitEventStateMode mode)
 
 void AbstractEventState::requestResetTimeDelta()
 {
-  Multithreading::executeInUiAsync([this]()
+  QtUtilsLib::MultithreadedApplication::executeInUiAsync([this]()
   {
     Q_EMIT forwardResetTimeDeltaRequest();
   });

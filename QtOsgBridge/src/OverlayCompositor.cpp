@@ -3,8 +3,7 @@
 
 #include <QtOsgBridge/Helper.h>
 
-#include <osgHelper/LogManager.h>
-#include <osgHelper/Macros.h>
+#include <utilsLib/Utils.h>
 
 namespace QtOsgBridge
 {
@@ -20,7 +19,7 @@ void OverlayCompositor::addVirtualOverlay(const QPointer<VirtualOverlay>& overla
 {
   if (m_overlays.count(overlay) > 0)
   {
-    OSGH_LOG_WARN("Virtual overlay '" + overlay->objectName().toStdString() + "' already added");
+    UTILS_LOG_WARN("Virtual overlay '" + overlay->objectName().toStdString() + "' already added");
     return;
   }
 
@@ -90,7 +89,7 @@ void OverlayCompositor::onVirtualOverlayDestroyed(QObject* object)
     }
   }
 
-  OSGH_LOG_WARN("OverlayCompositor: tried to remove virtual overlay that does not exist");
+  UTILS_LOG_WARN("OverlayCompositor: tried to remove virtual overlay that does not exist");
   assert(false);
 }
 
