@@ -83,6 +83,8 @@ int QtGameApplication::runGame()
     auto view = m->mainWindow->getViewWidget()->getView();
     view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
+    //view->getCamera(osgHelper::View::CameraType::Scene)->addUpdateCallback(m_updateCallback);
+
     UTILS_LOG_INFO("Starting mainloop");
     const auto ret = exec();
 
