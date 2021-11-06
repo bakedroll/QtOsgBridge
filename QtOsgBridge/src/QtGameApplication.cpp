@@ -1,6 +1,7 @@
 #include <QtOsgBridge/QtGameApplication.h>
 #include <QtOsgBridge/MainWindow.h>
 #include <QtOsgBridge/Helper.h>
+#include <QtOsgBridge/ViewProvider.h>
 
 #include <osgHelper/Observable.h>
 #include <osgHelper/TextureFactory.h>
@@ -81,9 +82,14 @@ int QtGameApplication::runGame()
     m_updateCallback = new GameUpdateCallback(std::bind(&QtGameApplication::updateStates, this, std::placeholders::_1));
 
     auto view = m->mainWindow->getViewWidget()->getView();
-    view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
-    //view->getCamera(osgHelper::View::CameraType::Scene)->addUpdateCallback(m_updateCallback);
+    auto viewProvider = injector().inject<IViewProvider>();
+    if (viewProvider.valid())
+    {
+      viewProvider->setView(view);
+    }
+
+    view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
     UTILS_LOG_INFO("Starting mainloop");
     const auto ret = exec();
@@ -128,6 +134,8 @@ void QtGameApplication::registerEssentialComponents(osgHelper::ioc::InjectionCon
   container.registerSingletonInterfaceType<osgHelper::IShaderFactory, osgHelper::ShaderFactory>();
   container.registerSingletonInterfaceType<osgHelper::IResourceManager, osgHelper::ResourceManager>();
   container.registerSingletonInterfaceType<osgHelper::ITextureFactory, osgHelper::TextureFactory>();
+
+  container.registerSingletonInterfaceType<QtOsgBridge::IViewProvider, QtOsgBridge::ViewProvider>();
 }
 
 void QtGameApplication::updateStates(const osgHelper::SimulationCallback::SimulationData& data)
