@@ -31,6 +31,7 @@ namespace QtOsgBridge
     {
       setupIOC();
 
+      prepareViewProvider();
       if (!injectPushAndPrepareState<TState>())
       {
         return -1;
@@ -78,6 +79,7 @@ namespace QtOsgBridge
     void updateStates(const osgHelper::SimulationCallback::SimulationData& data);
     void pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state);
     void exitState(const osg::ref_ptr<AbstractEventState>& state);
+    void prepareViewProvider();
 
   private Q_SLOTS:
     void onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
@@ -86,5 +88,4 @@ namespace QtOsgBridge
     void onExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
                                  AbstractEventState::ExitEventStateMode  mode);
   };
-
 }

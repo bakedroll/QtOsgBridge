@@ -82,13 +82,6 @@ int QtGameApplication::runGame()
     m_updateCallback = new GameUpdateCallback(std::bind(&QtGameApplication::updateStates, this, std::placeholders::_1));
 
     auto view = m->mainWindow->getViewWidget()->getView();
-
-    auto viewProvider = injector().inject<IViewProvider>();
-    if (viewProvider.valid())
-    {
-      viewProvider->setView(view);
-    }
-
     view->getRootGroup()->setUpdateCallback(m_updateCallback);
 
     UTILS_LOG_INFO("Starting mainloop");
@@ -178,6 +171,16 @@ void QtGameApplication::exitState(const osg::ref_ptr<AbstractEventState>& state)
   }
 
   UTILS_LOG_FATAL("Attempting to exit unknown state");
+}
+
+void QtGameApplication::prepareViewProvider()
+{
+  const auto view = m->mainWindow->getViewWidget()->getView();
+  auto viewProvider = injector().inject<IViewProvider>();
+  if (viewProvider.valid())
+  {
+    viewProvider->setView(view);
+  }
 }
 
 void QtGameApplication::onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
