@@ -166,7 +166,7 @@ namespace QtOsgBridge
             osg::Matrix::ortho2D(0.0, static_cast<double>(width), static_cast<double>(height), 0.0));
 
 
-    m_view->updateResolution(osg::Vec2f(width, height), qApp->devicePixelRatio());
+    m_view->updateResolution(osg::Vec2i(width, height), qApp->devicePixelRatio());
 
     m_graphicsWindow->setDefaultFboId(defaultFramebufferObject());
 
