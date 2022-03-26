@@ -73,12 +73,6 @@ int QtGameApplication::runGame()
 {
   return safeExecute([this]()
   {
-    if (m_states.size() != 1)
-    {
-      UTILS_LOG_FATAL("Unexpected number of states. runGame() should only be called once.");
-      return -1;
-    }
-
     m_updateCallback = new GameUpdateCallback(std::bind(&QtGameApplication::updateStates, this, std::placeholders::_1));
 
     auto view = m->mainWindow->getViewWidget()->getView();

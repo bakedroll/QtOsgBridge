@@ -33,7 +33,7 @@ public:
 
   explicit AbstractEventState(osgHelper::ioc::Injector& injector);
 
-  virtual ~AbstractEventState() = default;
+  ~AbstractEventState() override = default;
 
   virtual void onInitialize(QPointer<MainWindow> mainWindow, const SimulationData& data);
   virtual void onUpdate(const SimulationData& data);

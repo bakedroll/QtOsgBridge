@@ -2,6 +2,8 @@
 #include "InitialState.h"
 #include "LoadingInitialState.h"
 
+#include <osgHelper/ppu/BlendTexture.h>
+
 QtOsgBridgeApplication::QtOsgBridgeApplication(int& argc, char** argv)
   : QtGameApplication(argc, argv)
 {
@@ -18,4 +20,5 @@ void QtOsgBridgeApplication::registerComponents(osgHelper::ioc::InjectionContain
   container.registerType<osgHelper::ppu::DOF>();
   container.registerType<osgHelper::ppu::FXAA>();
   container.registerType<osgHelper::ppu::HDR>();
+  container.registerType<osgHelper::ppu::BlendTexture>();
 }
