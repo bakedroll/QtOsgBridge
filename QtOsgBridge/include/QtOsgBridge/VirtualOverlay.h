@@ -11,6 +11,8 @@ namespace QtOsgBridge
   class VirtualOverlay : public QWidget
   {
     Q_OBJECT
+    Q_PROPERTY(QRect geometry READ geometry WRITE setGeometry)
+    Q_PROPERTY(QPoint position READ position WRITE setPosition)
 
   public:
     VirtualOverlay();
@@ -22,6 +24,9 @@ namespace QtOsgBridge
 
     void setGeometry(const QRect& geometry);
     void setGeometry(int x, int y, int w, int h);
+
+    void setPosition(const QPoint& position);
+    QPoint position() const;
 
     void setColor(osg::Vec4f color);
 

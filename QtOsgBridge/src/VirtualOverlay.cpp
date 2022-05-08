@@ -134,6 +134,21 @@ void VirtualOverlay::setGeometry(int x, int y, int w, int h)
   setGeometry(QRect(x, y, w, h));
 }
 
+void VirtualOverlay::setPosition(const QPoint& position)
+{
+  auto geo = geometry();
+  geo.moveTo(position);
+
+  m->placeAt(geo.x(), geo.y());
+
+  QWidget::setGeometry(geo);
+}
+
+QPoint VirtualOverlay::position() const
+{
+  return geometry().topLeft();
+}
+
 void VirtualOverlay::setColor(osg::Vec4f color)
 {
   m->material->setDiffuse(osg::Material::FRONT_AND_BACK, color);
@@ -141,6 +156,11 @@ void VirtualOverlay::setColor(osg::Vec4f color)
 
 void VirtualOverlay::setVirtual(bool enabled)
 {
+  if (m->bIsVirtual == enabled)
+  {
+    return;
+  }
+
   m->bIsVirtual = enabled;
 
   setVisible(!enabled);
