@@ -163,7 +163,10 @@ void VirtualOverlay::setVirtual(bool enabled)
 
   m->bIsVirtual = enabled;
 
-  setVisible(!enabled);
+  if (!enabled)
+  {
+    setVisible(true);
+  }
 
   Q_EMIT toggledIsVirtual(this, enabled);
 }
