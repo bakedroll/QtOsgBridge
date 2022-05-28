@@ -12,7 +12,8 @@
 namespace QtOsgBridge
 {
 
-class AbstractEventState : public QObject,  public osg::Referenced
+class AbstractEventState : public QObject,
+                           public osg::Referenced
 {
   Q_OBJECT
 
