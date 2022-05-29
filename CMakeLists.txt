@@ -8,6 +8,8 @@ else()
   return()
 endif()
 
+option(QT_USE_VERSION_5 "Use Qt version 5" OFF)
+
 project(QtOsgBridge)
 
 add_subdirectory(QtOsgBridge)

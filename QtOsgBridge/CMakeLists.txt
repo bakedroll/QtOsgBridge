@@ -2,7 +2,7 @@ begin_project(QtOsgBridge LIBRARY)
 
 enable_automoc()
 
-require_library(Qt6 MODULES Core Gui Widgets OpenGL OpenGLWidgets)
+require_library(Qt MODULES Core Gui Widgets OpenGL OpenGLWidgets)
 require_library(OpenSceneGraph)
 require_library(osgPPU)
 

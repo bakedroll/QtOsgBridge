@@ -51,7 +51,7 @@ bool KeyboardMouseEventFilterBase::filterKeyboardMouseEvents(QObject* object, QE
     {
       if (!m_mouseDragData)
       {
-        const osg::Vec2f origin(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
+        const osg::Vec2f origin(static_cast<float>(mouseEvent->pos().x()), static_cast<float>(mouseEvent->pos().y()));
         m_mouseDragData = MouseDragData{ mouseEvent->button(), false, origin, origin };
       }
 
@@ -70,11 +70,11 @@ bool KeyboardMouseEventFilterBase::filterKeyboardMouseEvents(QObject* object, QE
         m_mouseDragData->moved = true;
       }
 
-      const osg::Vec2f pos(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y()));
+      const osg::Vec2f pos(static_cast<float>(mouseEvent->pos().x()), static_cast<float>(mouseEvent->pos().y()));
 
       if (m_isMouseCaptured)
       {
-        const auto delta = m_capturedMousePos - mouseEvent->globalPosition();
+        const auto delta = m_capturedMousePos - mouseEvent->globalPos();
         onDragMove(m_mouseDragData->button, m_mouseDragData->origin,
                    pos, osg::Vec2f(static_cast<int>(delta.x()), static_cast<int>(delta.y())));
       }
@@ -93,7 +93,7 @@ bool KeyboardMouseEventFilterBase::filterKeyboardMouseEvents(QObject* object, QE
       if (m_mouseDragData && (m_mouseDragData->button == mouseEvent->button()))
       {
         onDragEnd(m_mouseDragData->button, m_mouseDragData->origin,
-                  osg::Vec2f(static_cast<float>(mouseEvent->position().x()), static_cast<float>(mouseEvent->position().y())));
+                  osg::Vec2f(static_cast<float>(mouseEvent->pos().x()), static_cast<float>(mouseEvent->pos().y())));
 
         m_mouseDragData.reset();
       }

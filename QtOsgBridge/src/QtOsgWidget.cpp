@@ -212,7 +212,7 @@ namespace QtOsgBridge
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
-      const auto pos = event->position();
+      const auto pos = event->pos();
       return queue->mouseMotion(static_cast<float>(pos.x() * pixelRatio), static_cast<float>(pos.y() * pixelRatio));
     });
   }
@@ -225,7 +225,7 @@ namespace QtOsgBridge
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
-      const auto pos = event->position();
+      const auto pos = event->pos();
       return queue->mouseButtonPress(static_cast<float>(pos.x() * pixelRatio), static_cast<float>(pos.y() * pixelRatio),
                                      getOsgMouseButton(event));
     });
@@ -239,7 +239,7 @@ namespace QtOsgBridge
 
     handleEvent([event, pixelRatio](osgGA::EventQueue* queue)
     {
-      const auto pos = event->position();
+      const auto pos = event->pos();
       return queue->mouseButtonRelease(static_cast<float>(pos.x() * pixelRatio),
                                        static_cast<float>(pos.y() * pixelRatio), getOsgMouseButton(event));
     });
