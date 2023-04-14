@@ -1,5 +1,9 @@
 #pragma once
 
+#include <QApplication>
+
+#include <QtUtilsLib/MultithreadedApplication.h>
+
 #include <libQtGame/GameStatesApplication.h>
 
 #include <QtOsgBridge/MainWindow.h>
@@ -7,7 +11,8 @@
 namespace QtOsgBridge
 {
 
-class QtGameApplication : public libQtGame::GameStatesApplication
+class QtGameApplication : public QtUtilsLib::MultithreadedApplication<QApplication>,
+                          public libQtGame::GameStatesApplication
 {
   Q_OBJECT
 
@@ -28,6 +33,11 @@ public:
 
     return GameStatesApplication::runGame();
   }
+
+  bool notify(QObject *receiver, QEvent *event) override;
+
+  int execApp() override;
+  void quitApp() override;
 
 protected:
   void onException(const std::string& message) override;

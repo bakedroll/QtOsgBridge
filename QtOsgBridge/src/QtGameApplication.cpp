@@ -3,13 +3,16 @@
 #include <QtOsgBridge/EventProcessingState.h>
 #include <QtOsgBridge/ViewProvider.h>
 
+#include <QtUtilsLib/Multithreading.h>
+
 #include <QMessageBox>
 
 namespace QtOsgBridge
 {
 
-QtGameApplication::QtGameApplication(int& argc, char** argv)
-  : GameStatesApplication(argc, argv)
+QtGameApplication::QtGameApplication(int& argc, char** argv) :
+  MultithreadedApplication<QApplication>(argc, argv),
+  GameStatesApplication()
 {
   m_mainWindow = new MainWindow();
   m_mainWindow->show();
@@ -70,6 +73,26 @@ void QtGameApplication::registerEssentialComponents(osgHelper::ioc::InjectionCon
   GameStatesApplication::registerEssentialComponents(container);
 
   container.registerSingletonInterfaceType<QtOsgBridge::IViewProvider, QtOsgBridge::ViewProvider>();
+}
+
+bool QtGameApplication::notify(QObject* receiver, QEvent* event)
+{
+  if (safeExecute([&]() { QtUtilsLib::MultithreadedApplication<QApplication>::notify(receiver, event); return 0; }))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+int QtGameApplication::execApp()
+{
+  return exec();
+}
+
+void QtGameApplication::quitApp()
+{
+  quit();
 }
 
 void QtGameApplication::onException(const std::string& message)

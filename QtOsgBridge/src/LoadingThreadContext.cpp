@@ -1,6 +1,6 @@
 #include <QtOsgBridge/LoadingThreadContext.h>
 
-#include <QtUtilsLib/MultithreadedApplication.h>
+#include <QtUtilsLib/Multithreading.h>
 
 namespace QtOsgBridge
 {
@@ -15,7 +15,7 @@ void LoadingThreadContext::doWork()
 {
   m_func();
 
-  QtUtilsLib::MultithreadedApplication::executeInUiAsync([this]()
+  QtUtilsLib::Multithreading::executeInUiAsync([this]()
   {
     Q_EMIT workDone();
   });
