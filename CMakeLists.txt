@@ -8,7 +8,7 @@ else()
   return()
 endif()
 
-option(QT_USE_VERSION_5 "Use Qt version 5" OFF)
+option(QT_USE_VERSION_5 "Use Qt version 5" ON)
 
 project(QtOsgBridge)
 

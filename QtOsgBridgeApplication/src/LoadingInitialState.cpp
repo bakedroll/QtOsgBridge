@@ -39,5 +39,5 @@ void LoadingInitialState::onLoading()
 
 void LoadingInitialState::onRequestNewStates()
 {
-  requestNewEventState<InitialState>(NewEventStateMode::ExitCurrent);
+  requestNewEventState<InitialState>(NewGameStateMode::ExitCurrent);
 }

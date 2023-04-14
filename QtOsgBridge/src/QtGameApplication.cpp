@@ -1,208 +1,89 @@
 #include <QtOsgBridge/QtGameApplication.h>
-#include <QtOsgBridge/MainWindow.h>
-#include <QtOsgBridge/Helper.h>
+
+#include <QtOsgBridge/EventProcessingState.h>
 #include <QtOsgBridge/ViewProvider.h>
 
-#include <osgHelper/Observable.h>
-#include <osgHelper/TextureFactory.h>
-#include <osgHelper/ShaderFactory.h>
-#include <osgHelper/ResourceManager.h>
-
-#include <utilsLib/StdOutLoggingStrategy.h>
-#include <utilsLib/FileLoggingStrategy.h>
-#include <utilsLib/Utils.h>
-
-#include <QDir>
 #include <QMessageBox>
-#include <QPointer>
 
 namespace QtOsgBridge
 {
 
-struct QtGameApplication::Impl
-{
-  Impl()
-    : mainWindow(nullptr)
-    , simData({0.0, 0.0})
-  {
-  }
-
-  QPointer<MainWindow>               mainWindow;
-  AbstractEventState::SimulationData simData;
-};
-
 QtGameApplication::QtGameApplication(int& argc, char** argv)
-  : QtUtilsApplication<osg::ref_ptr<osg::Referenced>>(argc, argv)
-  , GameApplication()
-  , m(new Impl())
+  : GameStatesApplication(argc, argv)
 {
-  utilsLib::ILoggingManager::getLogger()->addLoggingStrategy(
-    std::make_shared<utilsLib::StdOutLoggingStrategy>());
-  utilsLib::ILoggingManager::getLogger()->addLoggingStrategy(
-    std::make_shared<utilsLib::FileLoggingStrategy>("./Logs"));
-
-  setlocale(LC_NUMERIC, "en_US");
-
-  m->mainWindow = new MainWindow();
-  m->mainWindow->show();
+  m_mainWindow = new MainWindow();
+  m_mainWindow->show();
 }
 
 QtGameApplication::~QtGameApplication()
 {
   UTILS_LOG_INFO("Application shutting down");
 
-  if (m->mainWindow->isVisible())
+  if (m_mainWindow->isVisible())
   {
-    m->mainWindow->close();
+    m_mainWindow->close();
   }
 
-  m->mainWindow->deleteLater();
+  m_mainWindow->deleteLater();
 }
 
-bool QtGameApplication::notify(QObject* receiver, QEvent* event)
+void QtGameApplication::onInitialize(const osg::ref_ptr<libQtGame::GameUpdateCallback>& updateCallback)
 {
-  if (safeExecute([&]() { MultithreadedApplication::notify(receiver, event); return 0; }))
+  const auto view = m_mainWindow->getViewWidget()->getView();
+  view->getRootGroup()->setUpdateCallback(updateCallback);
+}
+
+void QtGameApplication::onPrepareGameState(
+  const osg::ref_ptr<libQtGame::AbstractGameState>& state,
+  const libQtGame::AbstractGameState::SimulationData& simData)
+{
+  auto* eventState = dynamic_cast<EventProcessingState*>(state.get());
+  if (eventState)
   {
-      return true;
+    eventState->onInitialize(m_mainWindow, simData);
   }
 
-  return false;
+  m_mainWindow->getViewWidget()->installEventFilter(state.get());
 }
 
-int QtGameApplication::runGame()
+void QtGameApplication::onExitGameState(const osg::ref_ptr<libQtGame::AbstractGameState>& state)
 {
-  return safeExecute([this]()
-  {
-    m_updateCallback = new GameUpdateCallback(std::bind(&QtGameApplication::updateStates, this, std::placeholders::_1));
-
-    auto view = m->mainWindow->getViewWidget()->getView();
-    view->getRootGroup()->setUpdateCallback(m_updateCallback);
-
-    UTILS_LOG_INFO("Starting mainloop");
-    const auto ret = exec();
-
-    // shutdown/free all pointers
-    for (auto& state : m_states)
-    {
-      state.state->onExit();
-    }
-
-    m_states.clear();
-    view->cleanUp();
-
-    return ret;
-  });
+  m_mainWindow->removeEventFilter(state.get());
 }
 
-void QtGameApplication::prepareEventState(StateData& data)
+void QtGameApplication::onEmptyStateList()
 {
-  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardNewEventStateRequest, this,
-                                     &QtGameApplication::onNewEventStateRequest));
-  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardExitEventStateRequest, this,
-                                     &QtGameApplication::onExitEventStateRequest));
-
-  data.connections.push_back(connect(data.state.get(), &AbstractEventState::forwardResetTimeDeltaRequest, [this]()
+  if (m_mainWindow->isVisible())
   {
-    m_updateCallback->resetTimeDelta();
-  }));
+    UTILS_LOG_DEBUG("Empty state list. Closing mainwindow");
+    m_mainWindow->close();
+  }
+}
 
-  data.state->onInitialize(m->mainWindow, m->simData);
-  m->mainWindow->getViewWidget()->installEventFilter(data.state.get());
+void QtGameApplication::onShutdown()
+{
+  m_mainWindow->getViewWidget()->getView()->cleanUp();
+}
+
+void QtGameApplication::registerEssentialComponents(osgHelper::ioc::InjectionContainer& container)
+{
+  GameStatesApplication::registerEssentialComponents(container);
+
+  container.registerSingletonInterfaceType<QtOsgBridge::IViewProvider, QtOsgBridge::ViewProvider>();
 }
 
 void QtGameApplication::onException(const std::string& message)
 {
   QMessageBox::critical(nullptr, tr("Fatal error"), tr("A critical exception occured: %1").arg(QString::fromLocal8Bit(message.c_str())));
-  quit();
-}
-
-void QtGameApplication::registerEssentialComponents(osgHelper::ioc::InjectionContainer& container)
-{
-  container.registerSingletonInterfaceType<osgHelper::IShaderFactory, osgHelper::ShaderFactory>();
-  container.registerSingletonInterfaceType<osgHelper::IResourceManager, osgHelper::ResourceManager>();
-  container.registerSingletonInterfaceType<osgHelper::ITextureFactory, osgHelper::TextureFactory>();
-
-  container.registerSingletonInterfaceType<QtOsgBridge::IViewProvider, QtOsgBridge::ViewProvider>();
-}
-
-void QtGameApplication::updateStates(const osgHelper::SimulationCallback::SimulationData& data)
-{
-  m->simData = data;
-
-  if (m_states.empty() && m->mainWindow->isVisible())
-  {
-    UTILS_LOG_DEBUG("Empty state list. Closing mainwindow");
-    m->mainWindow->close();
-  }
-
-  for (auto& state : m_states)
-  {
-    state.state->onUpdate(data);
-  }
-}
-
-void QtGameApplication::pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state)
-{
-  StateData data;
-  data.state = state;
-
-  m_states.push_back(data);
-  prepareEventState(data);
-}
-
-void QtGameApplication::exitState(const osg::ref_ptr<AbstractEventState>& state)
-{
-  for (auto it = m_states.begin(); it != m_states.end(); ++it)
-  {
-    if (it->state == state)
-    {
-      m->mainWindow->removeEventFilter(state.get());
-      state->onExit();
-
-      m_states.erase(it);
-      return;
-    }
-  }
-
-  UTILS_LOG_FATAL("Attempting to exit unknown state");
 }
 
 void QtGameApplication::prepareViewProvider()
 {
-  const auto view = m->mainWindow->getViewWidget()->getView();
+  const auto view = m_mainWindow->getViewWidget()->getView();
   auto viewProvider = injector().inject<IViewProvider>();
   if (viewProvider.valid())
   {
     viewProvider->setView(view);
-  }
-}
-
-void QtGameApplication::onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
-                                               AbstractEventState::NewEventStateMode   mode,
-                                               const osg::ref_ptr<AbstractEventState>& newState)
-{
-  if (mode == AbstractEventState::NewEventStateMode::ExitCurrent)
-  {
-    exitState(current);
-  }
-
-  pushAndPrepareState(newState);
-}
-
-void QtGameApplication::onExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
-                                                AbstractEventState::ExitEventStateMode  mode)
-{
-  if (mode == AbstractEventState::ExitEventStateMode::ExitCurrent)
-  {
-    exitState(current);
-    return;
-  }
-
-  auto it = m_states.begin();
-  while (it != m_states.end())
-  {
-    exitState(it->state);
-    it = m_states.begin();
   }
 }
 

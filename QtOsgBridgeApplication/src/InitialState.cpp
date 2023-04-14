@@ -50,17 +50,17 @@ void State1::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const Si
 
   connect(b1, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State2>(NewEventStateMode::ContinueCurrent);
+    requestNewEventState<State2>(NewGameStateMode::ContinueCurrent);
   });
 
   connect(b2, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State2>(NewEventStateMode::ExitCurrent);
+    requestNewEventState<State2>(NewGameStateMode::ExitCurrent);
   });
 
   connect(b3, &QPushButton::clicked, [this]()
   {
-    requestExitEventState(ExitEventStateMode::ExitCurrent);
+    requestExitEventState(ExitGameStateMode::ExitCurrent);
   });
 
   const auto layout = new QVBoxLayout();
@@ -104,17 +104,17 @@ void State2::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, const Si
 
   connect(b1, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State1>(NewEventStateMode::ContinueCurrent);
+    requestNewEventState<State1>(NewGameStateMode::ContinueCurrent);
   });
 
   connect(b2, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State1>(NewEventStateMode::ExitCurrent);
+    requestNewEventState<State1>(NewGameStateMode::ExitCurrent);
   });
 
   connect(b3, &QPushButton::clicked, [this]()
   {
-    requestExitEventState(ExitEventStateMode::ExitCurrent);
+    requestExitEventState(ExitGameStateMode::ExitCurrent);
   });
 
   const auto layout = new QVBoxLayout();
@@ -215,17 +215,17 @@ void InitialState::onInitialize(QPointer<QtOsgBridge::MainWindow> mainWindow, co
 
   connect(buttonState1, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State1>(NewEventStateMode::ContinueCurrent);
+    requestNewEventState<State1>(NewGameStateMode::ContinueCurrent);
   });
 
   connect(buttonState2, &QPushButton::clicked, [this]()
   {
-    requestNewEventState<State2>(NewEventStateMode::ContinueCurrent);
+    requestNewEventState<State2>(NewGameStateMode::ContinueCurrent);
   });
 
   connect(buttonExit, &QPushButton::clicked, [this]()
   {
-    requestExitEventState(ExitEventStateMode::ExitAll);
+    requestExitEventState(ExitGameStateMode::ExitAll);
   });
 
   const auto navLayout = new QHBoxLayout();

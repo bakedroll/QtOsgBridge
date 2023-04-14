@@ -1,13 +1,14 @@
 #pragma once
 
-#include <QtOsgBridge/AbstractEventState.h>
+#include <QtOsgBridge/EventProcessingState.h>
 #include <QtOsgBridge/LoadingThreadContext.h>
+#include <QtOsgBridge/MainWindow.h>
 
 #include <QThread>
 
 namespace QtOsgBridge
 {
-  class LoadingState : public AbstractEventState
+  class LoadingState : public EventProcessingState
   {
   public:
     explicit LoadingState(osgHelper::ioc::Injector& injector);

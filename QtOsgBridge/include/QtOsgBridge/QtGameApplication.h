@@ -1,91 +1,52 @@
 #pragma once
 
-#include <QtOsgBridge/AbstractEventState.h>
-#include <QtOsgBridge/GameUpdateCallback.h>
+#include <libQtGame/GameStatesApplication.h>
 
-#include <osgHelper/ioc/PointerTypeDefinition.h>
-
-#include <QtUtilsLib/QtUtilsApplication.h>
-
-#include <osgHelper/GameApplication.h>
-#include <osgHelper/SimulationCallback.h>
-#include <osgHelper/ioc/InjectionContainer.h>
-
-#include <memory>
-
-#include <QMetaObject>
+#include <QtOsgBridge/MainWindow.h>
 
 namespace QtOsgBridge
 {
-  class QtGameApplication : public QtUtilsLib::QtUtilsApplication<osg::ref_ptr<osg::Referenced>>,
-                            public osgHelper::GameApplication
+
+class QtGameApplication : public libQtGame::GameStatesApplication
+{
+  Q_OBJECT
+
+public:
+  QtGameApplication(int& argc, char** argv);
+  ~QtGameApplication();
+
+  template <typename TState>
+  int runGame()
   {
-    Q_OBJECT
+    setupIOC();
 
-  public:
-    QtGameApplication(int& argc, char** argv);
-    ~QtGameApplication();
-
-    template <typename TState>
-    int runGame()
+    prepareViewProvider();
+    if (!injectPushAndPrepareState<TState>())
     {
-      setupIOC();
-
-      prepareViewProvider();
-      if (!injectPushAndPrepareState<TState>())
-      {
-        return -1;
-      }
-
-      return runGame();
+      return -1;
     }
 
-    bool notify(QObject *receiver, QEvent *event) override;
+    return GameStatesApplication::runGame();
+  }
 
-  protected:
-    struct StateData
-    {
-      osg::ref_ptr<AbstractEventState>     state;
-      std::vector<QMetaObject::Connection> connections;
-    };
+protected:
+  void onException(const std::string& message) override;
 
-    int runGame();
+  void onInitialize(const osg::ref_ptr<libQtGame::GameUpdateCallback>& updateCallback) override;
+  void onPrepareGameState(
+    const osg::ref_ptr<libQtGame::AbstractGameState>& state,
+    const libQtGame::AbstractGameState::SimulationData& simData) override;
+  void onExitGameState(const osg::ref_ptr<libQtGame::AbstractGameState>& state) override;
+  void onEmptyStateList() override;
+  void onShutdown() override;
 
-    void prepareEventState(StateData& data);
-    void onException(const std::string& message) override;
+  void registerEssentialComponents(osgHelper::ioc::InjectionContainer& container) override;
 
-    static void registerEssentialComponents(osgHelper::ioc::InjectionContainer& container);
+private:
+  QPointer<MainWindow> m_mainWindow;
 
-  private:
-    using StateList = std::vector<StateData>;
+  void prepareViewProvider();
 
-    struct Impl;
-    std::unique_ptr<Impl> m;
+};
 
-    StateList                        m_states;
-    osg::ref_ptr<GameUpdateCallback> m_updateCallback;
-
-    template <typename TState>
-    bool injectPushAndPrepareState()
-    {
-      auto state = injector().inject<TState>();
-      assert_return(state.valid(), false);
-
-      pushAndPrepareState(state);
-
-      return true;
-    }
-
-    void updateStates(const osgHelper::SimulationCallback::SimulationData& data);
-    void pushAndPrepareState(const osg::ref_ptr<AbstractEventState>& state);
-    void exitState(const osg::ref_ptr<AbstractEventState>& state);
-    void prepareViewProvider();
-
-  private Q_SLOTS:
-    void onNewEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
-                                AbstractEventState::NewEventStateMode   mode,
-                                const osg::ref_ptr<AbstractEventState>& newState);
-    void onExitEventStateRequest(const osg::ref_ptr<AbstractEventState>& current,
-                                 AbstractEventState::ExitEventStateMode  mode);
-  };
 }
