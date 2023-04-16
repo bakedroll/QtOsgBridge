@@ -3,8 +3,6 @@
 #include <QtOsgBridge/EventProcessingState.h>
 #include <QtOsgBridge/ViewProvider.h>
 
-#include <QtUtilsLib/Multithreading.h>
-
 #include <QMessageBox>
 
 namespace QtOsgBridge
@@ -44,6 +42,7 @@ void QtGameApplication::onPrepareGameState(
   if (eventState)
   {
     eventState->onInitialize(m_mainWindow, simData);
+    m_mainWindow->getViewWidget()->installEventFilter(eventState->eventHandler());
   }
 
   m_mainWindow->getViewWidget()->installEventFilter(state.get());
@@ -51,6 +50,12 @@ void QtGameApplication::onPrepareGameState(
 
 void QtGameApplication::onExitGameState(const osg::ref_ptr<libQtGame::AbstractGameState>& state)
 {
+  auto* eventState = dynamic_cast<EventProcessingState*>(state.get());
+  if (eventState)
+  {
+    m_mainWindow->getViewWidget()->removeEventFilter(eventState->eventHandler());
+  }
+
   m_mainWindow->removeEventFilter(state.get());
 }
 
